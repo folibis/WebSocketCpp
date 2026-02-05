@@ -1,0 +1,98 @@
+/*
+*
+* Copyright (c) 2021 ruslan@muhlinin.com
+*
+* Permission is hereby granted, free of charge, to any person obtaining a copy
+* of this software and associated documentation files (the "Software"), to deal
+* in the Software without restriction, including without limitation the rights
+* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+* copies of the Software, and to permit persons to whom the Software is
+* furnished to do so, subject to the following conditions:
+*
+* The above copyright notice and this permission notice shall be included in all
+* copies or substantial portions of the Software.
+*
+* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+* SOFTWARE.
+*
+*/
+
+#ifndef WEBCPP_REQUEST_H
+#define WEBCPP_REQUEST_H
+
+#include "HttpHeader.h"
+#include "ICommunicationClient.h"
+#include "IErrorable.h"
+#include "RequestBody.h"
+#include "Url.h"
+#include "common.h"
+#include <map>
+#include <memory>
+
+namespace WebCpp
+{
+
+class Session;
+class Request: public IErrorable
+{
+public:
+    Request();
+    Request(int connID, const std::string &remote);
+    Request(const Request& other) = delete;
+    Request& operator=(const Request& other) = delete;
+    Request(Request&& other) = default;
+    Request& operator=(Request&& other) = default;
+
+    bool Parse(const ByteArray &data);
+    int GetConnectionID() const;
+    void SetConnectionID(int connID);
+    const Url& GetUrl() const;
+    Url& GetUrl();
+    const HttpHeader& GetHeader() const;
+    HttpHeader& GetHeader();
+    Method GetMethod() const;
+    void SetMethod(Method method);
+    std::string GetHttpVersion() const;
+    const RequestBody& GetRequestBody() const;
+    RequestBody& GetRequestBody();
+    std::string GetArg(const std::string &name) const;
+    void SetArg(const std::string &name, const std::string &value);
+    bool IsKeepAlive() const;
+    Protocol GetProtocol() const;
+    size_t GetRequestLineLength() const;
+    size_t GetRequestSize() const;
+    std::string GetRemote() const;
+    void SetRemote(const std::string &remote);
+    bool Send(const std::shared_ptr<ICommunicationClient> &communication);
+    void Clear();
+    void SetSession(Session *session);
+    Session* GetSession() const;
+    std::string ToString() const;
+
+protected:
+    bool ParseRequestLine(const ByteArray &data, size_t &pos);
+    bool ParseBody(const ByteArray &data, size_t headerSize);
+    ByteArray BuildRequestLine() const;
+    ByteArray BuildHeaders() const;
+
+private:
+    int m_connID;
+    Url m_url;
+    HttpHeader m_header;
+    Method m_method = Method::Undefined;
+    std::string m_httpVersion = "HTTP/1.1";
+    size_t m_requestLineLength = 0;
+    std::map<std::string, std::string> m_args;
+    RequestBody m_requestBody;
+    std::string m_remote;
+    Session *m_session = nullptr;
+};
+
+}
+
+#endif // WEBCPP_REQUEST_H

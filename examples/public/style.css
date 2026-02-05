@@ -1,0 +1,94 @@
+body {
+  background-color:#ABEBC6;
+}
+
+body.ws {
+ background-color:#AED6F1;
+}
+
+form div {
+  padding: 10px;
+}
+
+.box {
+  margin:50px auto;
+  width: 500px;
+  padding: 20px;
+  border: 1px solid #CCCCCC;
+  background-color:#DEDEDE;
+}
+
+.wide {
+  width: 80%;
+}
+
+.small {
+  width: 400px;
+}
+
+.box div {
+  padding: 10px;
+}
+
+.box button {
+  padding :5px 10px;
+}
+
+#result_box {
+  border:1px solid #CCCCCC;
+  margin: 10px;
+  padding: 5px;
+  background-color: #FCF3CF;
+  text-align: center;
+}
+
+#status_box {
+  background-color: #D0ECE7;
+  padding:5px;
+  margin: 10px;
+}
+
+#sent_box {
+  background-color: #fef5e7;
+  border: 1px solid #999;
+  border-radius: 5px;
+  min-height: 20px;
+}
+
+#reseived_box {
+  background-color: #f5b7b1;
+  border: 1px solid #999;
+  border-radius: 5px;
+  min-height: 20px;
+}
+
+#reseived_box.ok {
+  background-color: #abebc6;
+}
+
+.center {
+  text-align:center;
+}
+
+#output {
+  margin:10px auto;
+  width: 90%;
+  border: 1px solid #CCCCCC;
+}
+.note {
+  font-style:italic;
+}
+
+#bar {
+  margin:10px auto;
+  width: 90%;
+  border: 1px solid #CCCCCC;
+  background-color: #D6EAF8;
+}
+
+.cell {
+  width: 50%;
+  display: inline-block;
+  overflow: hidden;
+}
+
