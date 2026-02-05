@@ -27,6 +27,8 @@
 
 #include <poll.h>
 #include <stddef.h>
+
+#include <cstdint>
 #ifdef WITH_OPENSSL
 #include <openssl/err.h>
 #include <openssl/ssl.h>
