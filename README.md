@@ -1,4 +1,4 @@
-![example workflow](https://github.com/folibis/WebCpp/actions/workflows/cmake.yml/badge.svg)
+![example workflow](https://github.com/folibis/WebSocketCpp/actions/workflows/cmake.yml/badge.svg)
 
 # WebSocketCpp
 
@@ -27,11 +27,11 @@ Requirements:
 ```cpp
 WebCpp::WebSocketServer wsServer;
 
-WebCpp::Config config;
+WebCpp::Config &config = WebCpp::Config::Instance();
 config.SetWsProtocol(WebCpp::Http::Protocol::WS);
 config.SetWsServerPort(8081);    
     
-if(wsServer.Init(config))
+if(wsServer.Init())
 {
     wsServer.OnMessage("/ws[/{user}/]", [](const WebCpp::Request &request, WebCpp::ResponseWebSocket &response, const ByteArray &data) -> bool {
         std::string user = request.GetArg("user");
@@ -47,7 +47,7 @@ wsServer.Run();
 wsServer.WaitFor();
 
 // now you can connect to the WebSocket server using ws://127.0.0.1:8081/ws or ws://127.0.0.1:8081/ws/john
-// (or use included test page: http://127.0.0.1:8080/ws)
+// (or use included test page: examples/public/WebSocketServer.html)
 ```
 
 #### WebSocket client ####
@@ -127,7 +127,7 @@ openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout server.key -
 And then set the path to the certificate and the key:
 
 ```cpp
-WebCpp::Config config;
+WebCpp::Config &config = WebCpp::Config::Instance();
 config.SetSslSertificate("~/.ssh/server.cert");
 config.SetSslKey("~/.ssh/server.key");
 ```
