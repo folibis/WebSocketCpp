@@ -25,15 +25,15 @@ Requirements:
 
 **WebSocker server**
 ```cpp
-WebCpp::WebSocketServer wsServer;
+WebSocketCpp::WebSocketServer wsServer;
 
-WebCpp::Config &config = WebCpp::Config::Instance();
-config.SetWsProtocol(WebCpp::Http::Protocol::WS);
+WebSocketCpp::Config &config = WebSocketCpp::Config::Instance();
+config.SetWsProtocol(WebSocketCpp::Http::Protocol::WS);
 config.SetWsServerPort(8081);    
     
 if(wsServer.Init())
 {
-    wsServer.OnMessage("/ws[/{user}/]", [](const WebCpp::Request &request, WebCpp::ResponseWebSocket &response, const ByteArray &data) -> bool {
+    wsServer.OnMessage("/ws[/{user}/]", [](const WebSocketCpp::Request &request, WebSocketCpp::ResponseWebSocket &response, const ByteArray &data) -> bool {
         std::string user = request.GetArg("user");
         if(user.empty())
         {
@@ -52,7 +52,7 @@ wsServer.WaitFor();
 
 #### WebSocket client ####
 ```cpp
-WebCpp::WebSocketClient wsClient;
+WebSocketCpp::WebSocketClient wsClient;
 wsClient.SetOnConnect([](bool connected)
 {
     std::cout << "connected: " << (connected ? "true" : "false") << std::endl;
@@ -68,7 +68,7 @@ wsClient.SetOnError([](const std::string &error)
     std::cout << "error: " << error << std::endl;
 });
     
-wsClient.SetOnMessage([](WebCpp::ResponseWebSocket &response)
+wsClient.SetOnMessage([](WebSocketCpp::ResponseWebSocket &response)
 {
         std::cout << "message received: " << StringUtil::ByteArray2String(response.GetData()) << std::endl;
 });
@@ -82,7 +82,7 @@ wsClient.Close();
 
 **Routing**
 ```cpp
-server.OnMessage("/(user|users)/{user:alpha}/[{action:string}/]", [&](const WebCpp::Request &request, WebCpp::ResponseWebSocket &response, const WebCpp::ByteArray &data) -> bool
+server.OnMessage("/(user|users)/{user:alpha}/[{action:string}/]", [&](const WebSocketCpp::Request &request, WebSocketCpp::ResponseWebSocket &response, const WebSocketCpp::ByteArray &data) -> bool
 {
     std::string user = request.GetArg("user");
     if(user.empty())
@@ -127,7 +127,7 @@ openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout server.key -
 And then set the path to the certificate and the key:
 
 ```cpp
-WebCpp::Config &config = WebCpp::Config::Instance();
+WebSocketCpp::Config &config = WebSocketCpp::Config::Instance();
 config.SetSslSertificate("~/.ssh/server.cert");
 config.SetSslKey("~/.ssh/server.key");
 ```
