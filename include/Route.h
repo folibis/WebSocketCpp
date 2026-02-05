@@ -1,29 +1,29 @@
 /*
-*
-* Copyright (c) 2021 ruslan@muhlinin.com
-*
-* Permission is hereby granted, free of charge, to any person obtaining a copy
-* of this software and associated documentation files (the "Software"), to deal
-* in the Software without restriction, including without limitation the rights
-* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-* copies of the Software, and to permit persons to whom the Software is
-* furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included in all
-* copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-* SOFTWARE.
-*
-*/
+ *
+ * Copyright (c) 2021 ruslan@muhlinin.com
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ */
 
-#ifndef WEBCPP_ROUTE_H
-#define WEBCPP_ROUTE_H
+#ifndef WEB_SOCKET_CPP_ROUTE_H
+#define WEB_SOCKET_CPP_ROUTE_H
 
 #include <algorithm>
 #include <string>
@@ -31,26 +31,26 @@
 #include "Request.h"
 #include "common.h"
 
-namespace WebCpp
+namespace WebSocketCpp
 {
 
 class Route
 {
 public:
-    Route(const std::string &path, Method method, bool useAuth = false);
-    Route(const Route& other) = delete;
+    Route(const std::string& path, Method method, bool useAuth = false);
+    Route(const Route& other)            = delete;
     Route& operator=(const Route& other) = delete;
-    Route(Route&& other) = default;
-    Route& operator=(Route&& other) = default;
+    Route(Route&& other)                 = default;
+    Route& operator=(Route&& other)      = default;
 
     const std::string& GetPath() const;
-    bool IsMatch(Request &request);
-    bool IsUseAuth() const;
+    bool               IsMatch(Request& request);
+    bool               IsUseAuth() const;
 
     std::string ToString() const;
 
 protected:
-    bool Parse(const std::string &path);
+    bool Parse(const std::string& path);
     struct Token
     {
         enum class Type
@@ -68,14 +68,14 @@ protected:
             Numeric,
             String,
             Upper,
-            Lower,            
+            Lower,
         };
 
-        std::string text = "";
+        std::string              text = "";
         std::vector<std::string> group;
-        Type type = Type::Default;
-        View view = View::Default;
-        bool optional = false;
+        Type                     type     = Type::Default;
+        View                     view     = View::Default;
+        bool                     optional = false;
 
         size_t GetLength() const
         {
@@ -96,18 +96,16 @@ protected:
         }
         void SortGroup()
         {
-            std::sort(group.begin(), group.end(), [](const std::string& first, const std::string& second)
-            {
-                if(first.size() != second.size())
+            std::sort(group.begin(), group.end(), [](const std::string& first, const std::string& second) {
+                if (first.size() != second.size())
                 {
                     return first.size() > second.size();
                 }
                 return first > second;
-
             });
         }
 
-        bool IsMatch(const char *ch, size_t length, size_t& pos);
+        bool IsMatch(const char* ch, size_t length, size_t& pos);
         bool IsAny(char ch) const;
         bool IsString(char ch) const;
         bool IsAlpha(char ch) const;
@@ -115,11 +113,11 @@ protected:
         bool IsLower(char ch) const;
         bool IsUpper(char ch) const;
 
-        static View String2View(const std::string &str);
-        bool Compare(const char *ch1, const char *ch2, size_t size);
+        static View String2View(const std::string& str);
+        bool        Compare(const char* ch1, const char* ch2, size_t size);
     };
 
-    bool AddToken(Token &token, const std::string &str);
+    bool AddToken(Token& token, const std::string& str);
 
 private:
     enum class State
@@ -132,11 +130,11 @@ private:
     };
 
     std::vector<Token> m_tokens;
-    Method m_method;
-    std::string m_path;
-    bool m_useAuth = false;
+    Method             m_method;
+    std::string        m_path;
+    bool               m_useAuth = false;
 };
 
-}
+} // namespace WebSocketCpp
 
-#endif // WEBCPP_ROUTE_H
+#endif // WEB_SOCKET_CPP_ROUTE_H

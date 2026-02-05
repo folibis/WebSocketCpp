@@ -11,7 +11,7 @@
 
 #define MAX_EXT_LENGTH 8
 
-using namespace WebCpp;
+using namespace WebSocketCpp;
 
 std::string FileSystem::GetFullPath(const std::string &path) {
     char buffer[PATH_MAX];

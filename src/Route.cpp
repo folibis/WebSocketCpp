@@ -1,15 +1,15 @@
-#include "common.h"
-#include "StringUtil.h"
 #include "Route.h"
 
+#include "StringUtil.h"
+#include "common.h"
 
-using namespace WebCpp;
+using namespace WebSocketCpp;
 
-Route::Route(const std::string &path, Method method, bool useAuth)
+Route::Route(const std::string& path, Method method, bool useAuth)
 {
     m_method = method;
     Parse(path);
-    m_path = path;
+    m_path    = path;
     m_useAuth = useAuth;
 }
 
@@ -18,51 +18,51 @@ const std::string& Route::GetPath() const
     return m_path;
 }
 
-bool Route::IsMatch(Request &request)
+bool Route::IsMatch(Request& request)
 {
-    const std::string path = request.GetUrl().GetPath();
-    const char *ch = path.data();
-    size_t length = path.length();
+    const std::string path   = request.GetUrl().GetPath();
+    const char*       ch     = path.data();
+    size_t            length = path.length();
 
-    size_t pos = 0;
+    size_t pos    = 0;
     size_t offset = 0;
-    bool any = false;
+    bool   any    = false;
 
-    for(auto &token: m_tokens)
+    for (auto& token : m_tokens)
     {
-        if(token.type == Token::Type::Any)
+        if (token.type == Token::Type::Any)
         {
             any = true;
             continue;
         }
 
-        if(any)
+        if (any)
         {
-            if(token.type == Token::Type::Variable)
+            if (token.type == Token::Type::Variable)
             {
                 break;
             }
             size_t tpos = pos;
-            while(tpos < length)
+            while (tpos < length)
             {
-                if(token.IsMatch(ch + tpos, length - tpos, offset))
+                if (token.IsMatch(ch + tpos, length - tpos, offset))
                 {
                     pos = tpos + offset;
                     any = false;
                     break;
                 }
-                tpos ++;
+                tpos++;
             }
 
-            if(any)
+            if (any)
             {
                 return false;
             }
             break;
         }
-        if(token.IsMatch(ch + pos, length - pos, offset))
+        if (token.IsMatch(ch + pos, length - pos, offset))
         {
-            if(token.type == Token::Type::Variable)
+            if (token.type == Token::Type::Variable)
             {
                 request.SetArg(token.text, std::string(ch + pos, offset));
             }
@@ -70,14 +70,14 @@ bool Route::IsMatch(Request &request)
         }
         else
         {
-            if(token.optional == false)
+            if (token.optional == false)
             {
                 return false;
             }
         }
     }
 
-    if(pos < length && any == false)
+    if (pos < length && any == false)
     {
         return false;
     }
@@ -95,20 +95,20 @@ std::string Route::ToString() const
     return "Route (method: " + Method2String(m_method) + ", path: " + m_path + ", auth: " + (m_useAuth ? "true" : "false") + ")";
 }
 
-bool Route::Parse(const std::string &path)
+bool Route::Parse(const std::string& path)
 {
-    const char *ch = path.data();
-    std::string str = "";
-    State state = State::Default;
-    Token current;
+    const char* ch    = path.data();
+    std::string str   = "";
+    State       state = State::Default;
+    Token       current;
 
-    for(size_t i = 0;i < path.size();i ++)
+    for (size_t i = 0; i < path.size(); i++)
     {
-        switch(ch[i])
+        switch (ch[i])
         {
             case '*':
                 AddToken(current, str);
-                str = "";
+                str          = "";
                 current.text = "*";
                 current.type = Token::Type::Any;
                 AddToken(current, str);
@@ -116,18 +116,18 @@ bool Route::Parse(const std::string &path)
                 break;
             case '[':
                 AddToken(current, str);
-                str = "";
+                str              = "";
                 current.optional = true;
-                state = State::Optional;
+                state            = State::Optional;
                 break;
             case ']':
                 AddToken(current, str);
-                str = "";
+                str              = "";
                 current.optional = false;
-                state = State::Default;
+                state            = State::Default;
                 break;
             case '}':
-                if(state == State::VariableType)
+                if (state == State::VariableType)
                 {
                     current.view = Token::String2View(str);
                     AddToken(current, "");
@@ -136,29 +136,30 @@ bool Route::Parse(const std::string &path)
                 {
                     AddToken(current, str);
                 }
-                str = "";
+                str   = "";
                 state = State::Default;
                 break;
-            case'{':
-                switch(state)
+            case '{':
+                switch (state)
                 {
                     case State::Default:
                     case State::Optional:
                         AddToken(current, str);
                         str = "";
                         break;
-                    default: break;
+                    default:
+                        break;
                 }
 
-                state = State::Variable;
+                state        = State::Variable;
                 current.type = Token::Type::Variable;
                 break;
             case ':':
-                if(state == State::Variable)
+                if (state == State::Variable)
                 {
-                    state = State::VariableType;
+                    state        = State::VariableType;
                     current.text = str;
-                    str = "";
+                    str          = "";
                 }
                 else
                 {
@@ -167,8 +168,8 @@ bool Route::Parse(const std::string &path)
                 break;
             case '(':
                 AddToken(current, str);
-                str = "";
-                state = State::OrGroup;
+                str          = "";
+                state        = State::OrGroup;
                 current.type = Token::Type::Group;
                 break;
             case '|':
@@ -178,7 +179,7 @@ bool Route::Parse(const std::string &path)
             case ')':
                 current.group.push_back(str);
                 current.SortGroup();
-                str = "";
+                str   = "";
                 state = State::Default;
                 AddToken(current, "");
                 break;
@@ -192,11 +193,11 @@ bool Route::Parse(const std::string &path)
     return true;
 }
 
-bool Route::AddToken(Token &token, const std::string &str)
+bool Route::AddToken(Token& token, const std::string& str)
 {
-    if(!str.empty() || !token.IsEmpty())
+    if (!str.empty() || !token.IsEmpty())
     {
-        if(!str.empty())
+        if (!str.empty())
         {
             token.text = str;
         }
@@ -209,77 +210,78 @@ bool Route::AddToken(Token &token, const std::string &str)
     return false;
 }
 
-bool Route::Token::IsMatch(const char *ch, size_t length, size_t &pos)
+bool Route::Token::IsMatch(const char* ch, size_t length, size_t& pos)
 {
     bool retval = false;
 
-    switch(type)
+    switch (type)
     {
         case Type::Default:
-            if(text.length() > length)
+            if (text.length() > length)
             {
                 break;
             }
-            if(Compare(ch, text.data(), text.length()))
+            if (Compare(ch, text.data(), text.length()))
             {
-                pos = text.length();
+                pos    = text.length();
                 retval = true;
             }
             break;
         case Type::Variable:
+        {
+            bool (Route::Token::*fptr)(char) const = &Route::Token::IsString;
+
+            switch (view)
             {
-                bool(Route::Token::*fptr)(char) const = &Route::Token::IsString;
+                case View::Any:
+                    fptr = &Route::Token::IsAny;
+                    break;
+                case View::Alpha:
+                    fptr = &Route::Token::IsAlpha;
+                    break;
+                case View::Numeric:
+                    fptr = &Route::Token::IsNumeric;
+                    break;
+                case View::String:
+                    fptr = &Route::Token::IsString;
+                    break;
+                case View::Upper:
+                    fptr = &Route::Token::IsUpper;
+                    break;
+                case View::Lower:
+                    fptr = &Route::Token::IsLower;
+                    break;
+                default:
+                    break;
+            }
 
-                switch(view)
+            auto   f = std::mem_fn(fptr);
+            size_t i = 0;
+            for (i = 0; i < length; i++)
+            {
+                if (f(this, ch[i]) == false)
                 {
-                    case View::Any:
-                        fptr = &Route::Token::IsAny;
-                        break;
-                    case View::Alpha:
-                        fptr = &Route::Token::IsAlpha;
-                        break;
-                    case View::Numeric:
-                        fptr = &Route::Token::IsNumeric;
-                        break;
-                    case View::String:
-                        fptr = &Route::Token::IsString;
-                        break;
-                    case View::Upper:
-                        fptr = &Route::Token::IsUpper;
-                        break;
-                    case View::Lower:
-                        fptr = &Route::Token::IsLower;
-                        break;
-                    default: break;
-                }
-
-                auto f = std::mem_fn(fptr);
-                size_t i = 0;
-                for(i = 0;i < length;i ++)
-                {
-                    if(f(this, ch[i]) == false)
-                    {
-                        break;
-                    }
-                }
-
-                retval = (i > 0);
-                if(retval)
-                {
-                    pos = i;
+                    break;
                 }
             }
-            break;
-        case Type::Group:
-            for(auto &str: group)
+
+            retval = (i > 0);
+            if (retval)
             {
-                if(str.length() > length)
+                pos = i;
+            }
+        }
+        break;
+        case Type::Group:
+            for (auto& str : group)
+            {
+                if (str.length() > length)
                 {
                     continue;
                 }
-                if(Compare(ch, str.data(), str.length()))
+                if (Compare(ch, str.data(), str.length()))
                 {
-                    pos = str.length();
+                    pos    = str.length();
                     retval = true;
                     break;
                 }
@@ -300,7 +302,7 @@ bool Route::Token::IsAny(char ch) const
 
 bool Route::Token::IsString(char ch) const
 {
-    static ByteArray allowed = { '.', '_', '-', ' ' };
+    static ByteArray allowed = {'.', '_', '-', ' '};
 
     return (IsAlpha(ch) || IsNumeric(ch) || StringUtil::Contains(allowed, ch));
 }
@@ -325,29 +327,36 @@ bool Route::Token::IsUpper(char ch) const
     return (ch >= 'A' && ch <= 'Z');
 }
 
-Route::Token::View Route::Token::String2View(const std::string &str)
+Route::Token::View Route::Token::String2View(const std::string& str)
 {
     std::string s = str;
     StringUtil::ToLower(s);
-    switch(_(s.c_str()))
+    switch (_(s.c_str()))
     {
-        case _("any"): return Route::Token::View::Any;
-        case _("alpha"): return Route::Token::View::Alpha;
-        case _("numeric"): return Route::Token::View::Numeric;
-        case _("string"): return Route::Token::View::String;
-        case _("upper"): return Route::Token::View::Upper;
-        case _("lower"): return Route::Token::View::Lower;
-        default: break;
+        case _("any"):
+            return Route::Token::View::Any;
+        case _("alpha"):
+            return Route::Token::View::Alpha;
+        case _("numeric"):
+            return Route::Token::View::Numeric;
+        case _("string"):
+            return Route::Token::View::String;
+        case _("upper"):
+            return Route::Token::View::Upper;
+        case _("lower"):
+            return Route::Token::View::Lower;
+        default:
+            break;
     }
 
     return Route::Token::View::Default;
 }
 
-bool Route::Token::Compare(const char *ch1, const char *ch2, size_t size)
+bool Route::Token::Compare(const char* ch1, const char* ch2, size_t size)
 {
-    for(size_t i = 0; i < size;i ++)
+    for (size_t i = 0; i < size; i++)
     {
-        if(ch1[i] != ch2[i])
+        if (ch1[i] != ch2[i])
         {
             return false;
         }

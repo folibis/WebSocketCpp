@@ -1,34 +1,28 @@
 /*
-*
-* Copyright (c) 2021 ruslan@muhlinin.com
-*
-* Permission is hereby granted, free of charge, to any person obtaining a copy
-* of this software and associated documentation files (the "Software"), to deal
-* in the Software without restriction, including without limitation the rights
-* to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-* copies of the Software, and to permit persons to whom the Software is
-* furnished to do so, subject to the following conditions:
-*
-* The above copyright notice and this permission notice shall be included in all
-* copies or substantial portions of the Software.
-*
-* THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-* IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-* FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-* AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-* LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-* OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-* SOFTWARE.
-*
-*/
+ *  * Copyright (c) 2021 ruslan@muhlinin.com
+ *  * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *  * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *  */
 
-#ifndef WEBCPP_DEBUG_PRINT_H
-#define WEBCPP_DEBUG_PRINT_H
+#ifndef WEB_SOCKET_CPP_DEBUG_PRINT_H
+#define WEB_SOCKET_CPP_DEBUG_PRINT_H
 
 #include <iostream>
 
-
-namespace WebCpp
+namespace WebSocketCpp
 {
 
 class DebugPrint
@@ -36,10 +30,10 @@ class DebugPrint
 public:
     DebugPrint();
 
-    template<typename T>
-    DebugPrint& operator<<(const T &t)
+    template <typename T>
+    DebugPrint& operator<<(const T& t)
     {
-        if(DebugPrint::AllowPrint)
+        if (DebugPrint::AllowPrint)
         {
             std::cout << t;
         }
@@ -47,11 +41,11 @@ public:
         return *this;
     }
 
-    typedef std::basic_ostream<char, std::char_traits<char> > CoutType;
+    typedef std::basic_ostream<char, std::char_traits<char>> CoutType;
     typedef std::ostream& (*StandardEndLine)(CoutType&);
     DebugPrint& operator<<(StandardEndLine manip)
     {
-        if(DebugPrint::AllowPrint)
+        if (DebugPrint::AllowPrint)
         {
             manip(std::cout);
         }
@@ -60,7 +54,7 @@ public:
 
     static DebugPrint& endl(DebugPrint& stream)
     {
-        if(DebugPrint::AllowPrint)
+        if (DebugPrint::AllowPrint)
         {
             std::cout << std::endl;
         }
@@ -70,6 +64,6 @@ public:
     static bool AllowPrint;
 };
 
-}
+} // namespace WebSocketCpp
 
-#endif // WEBCPP_DEBUG_PRINT_H
+#endif // WEB_SOCKET_CPP_DEBUG_PRINT_H

@@ -1,7 +1,6 @@
 #include "Mutex.h"
 
-
-using namespace WebCpp;
+using namespace WebSocketCpp;
 
 pthread_mutex_t* Mutex::GetMutex()
 {

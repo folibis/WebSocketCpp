@@ -1,21 +1,22 @@
 #ifdef WITH_OPENSSL
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <cstring>
-#include <signal.h>
 #include "CommunicationSslServer.h"
 
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <netinet/in.h>
+#include <signal.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-using namespace WebCpp;
+#include <cstring>
 
-CommunicationSslServer::CommunicationSslServer(const std::string &cert, const std::string &key) noexcept:
-    ICommunicationServer(SocketPool::Domain::Inet,
-                         SocketPool::Type::Stream,
-                         SocketPool::Options::ReuseAddr | SocketPool::Options::Ssl)
+using namespace WebSocketCpp;
+
+CommunicationSslServer::CommunicationSslServer(const std::string& cert, const std::string& key) noexcept
+    : ICommunicationServer(SocketPool::Domain::Inet,
+          SocketPool::Type::Stream,
+          SocketPool::Options::ReuseAddr | SocketPool::Options::Ssl)
 {
     m_sockets.SetSslCredentials(cert, key);
     m_sockets.SetPort(DEFAULT_SSL_PORT);
@@ -27,7 +28,7 @@ bool CommunicationSslServer::Init()
     ClearError();
     signal(SIGPIPE, SIG_IGN);
 
-    if(m_initialized == true)
+    if (m_initialized == true)
     {
         SetLastError("already initialized");
         return false;
@@ -38,11 +39,11 @@ bool CommunicationSslServer::Init()
     return m_initialized;
 }
 
-bool CommunicationSslServer::Connect(const std::string &address, int port)
+bool CommunicationSslServer::Connect(const std::string& address, int port)
 {
     ClearError();
 
-    if(m_initialized == false)
+    if (m_initialized == false)
     {
         SetLastError("not initialized");
         return false;

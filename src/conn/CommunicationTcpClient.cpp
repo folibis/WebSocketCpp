@@ -11,7 +11,7 @@
 #define DEFAULT_HTTP_PORT 80
 
 
-using namespace WebCpp;
+using namespace WebSocketCpp;
 
 CommunicationTcpClient::CommunicationTcpClient():
     ICommunicationClient(SocketPool::Domain::Inet,

@@ -22,45 +22,47 @@
  *
  */
 
-#ifndef WEBCPP_FILESYSTEM_H
-#define WEBCPP_FILESYSTEM_H
+#ifndef WEB_SOCKET_CPP_FILESYSTEM_H
+#define WEB_SOCKET_CPP_FILESYSTEM_H
 
 #include <string>
 #include <vector>
 
-namespace WebCpp {
+namespace WebSocketCpp
+{
 
-class FileSystem {
+class FileSystem
+{
 public:
-    static std::string GetFullPath(const std::string &path);
+    static std::string GetFullPath(const std::string& path);
     static std::string GetApplicationFolder();
-    static bool ChangeDir(const std::string &path);
-    static std::string NormalizePath(const std::string &path, bool file = false);
-    static std::string ExtractFileName(const std::string &path);
-    static std::string ExtractFileExtension(const std::string &path);
-    static bool IsFileExist(const std::string &path);
-    static int GetFileSize(const std::string &path);
-    static char PathDelimiter();
-    static bool CreateFolder(const std::string &path);
-    static bool DeleteFolder(const std::string &path);
+    static bool        ChangeDir(const std::string& path);
+    static std::string NormalizePath(const std::string& path, bool file = false);
+    static std::string ExtractFileName(const std::string& path);
+    static std::string ExtractFileExtension(const std::string& path);
+    static bool        IsFileExist(const std::string& path);
+    static int         GetFileSize(const std::string& path);
+    static char        PathDelimiter();
+    static bool        CreateFolder(const std::string& path);
+    static bool        DeleteFolder(const std::string& path);
     static std::string GetDateTime();
-    static std::string GetFileModifiedTime(const std::string &file);
+    static std::string GetFileModifiedTime(const std::string& file);
     static std::string TempFolder();
     static std::string HomeFolder();
     static std::string Root();
-    static bool IsDir(const std::string &path);
+    static bool        IsDir(const std::string& path);
 
     struct FileInfo
     {
         std::string name;
-        bool folder;
-        long size;
+        bool        folder;
+        long        size;
         std::string lastModified;
     };
 
-    static std::vector<FileInfo> GetFolder(const std::string &path);
+    static std::vector<FileInfo> GetFolder(const std::string& path);
 };
 
-} // namespace WebCpp
+} // namespace WebSocketCpp
 
-#endif // WEBCPP_FILESYSTEM_H
+#endif // WEB_SOCKET_CPP_FILESYSTEM_H

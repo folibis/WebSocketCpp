@@ -1,39 +1,39 @@
-#include "common.h"
-#include"StringUtil.h"
 #include "Url.h"
 
+#include "StringUtil.h"
+#include "common.h"
 
-using namespace WebCpp;
+using namespace WebSocketCpp;
 
-Url::Url(const std::string &url)
+Url::Url(const std::string& url)
 {
     Parse(url);
 }
 
 Url::Url() = default;
 
-bool Url::Parse(const std::string &url, bool full)
+bool Url::Parse(const std::string& url, bool full)
 {
-    size_t pos = 0, prev = 0;
+    size_t      pos = 0, prev = 0;
     std::string temp;
 
     m_originalSize = url.size();
 
-    if(full)
+    if (full)
     {
         pos = url.find(':');
-        if(pos == std::string::npos) // scheme is not specified
+        if (pos == std::string::npos) // scheme is not specified
         {
             return false;
         }
-        temp = std::string(url.begin(),url.begin() + pos);
+        temp     = std::string(url.begin(), url.begin() + pos);
         m_scheme = String2Scheme(temp);
-        if(m_scheme == Url::Scheme::Undefined)
+        if (m_scheme == Url::Scheme::Undefined)
         {
             return false;
         }
 
-        switch(m_scheme)
+        switch (m_scheme)
         {
             case Scheme::HTTPS:
             case Scheme::WSS:
@@ -45,8 +45,8 @@ bool Url::Parse(const std::string &url, bool full)
 
         prev = pos + 3;
         char ch;
-        pos = StringUtil::FindOneOf(url,"/#?", ch, prev);
-        if(pos != std::string::npos) // authority presents
+        pos = StringUtil::FindOneOf(url, "/#?", ch, prev);
+        if (pos != std::string::npos) // authority presents
         {
             std::string authority = std::string(url.begin() + prev, url.begin() + pos);
             ParseAuthority(authority);
@@ -59,25 +59,25 @@ bool Url::Parse(const std::string &url, bool full)
     return m_initiaized;
 }
 
-bool Url::ParseAuthority(const std::string &authority)
+bool Url::ParseAuthority(const std::string& authority)
 {
-    size_t pos = 0, prev = 0;
+    size_t      pos = 0, prev = 0;
     std::string temp;
 
     pos = authority.find("@", prev); // username presents
-    if(pos != std::string::npos)
+    if (pos != std::string::npos)
     {
         m_user = std::string(authority.begin() + prev, authority.begin() + pos);
-        prev = pos + 1;
+        prev   = pos + 1;
     }
     pos = authority.find(":", prev);
-    if(pos != std::string::npos) // port presents
+    if (pos != std::string::npos) // port presents
     {
         m_host = std::string(authority.begin() + prev, authority.begin() + pos);
-        prev = pos + 1;
-        temp = std::string(authority.begin() + prev, authority.end());
+        prev   = pos + 1;
+        temp   = std::string(authority.begin() + prev, authority.end());
         int i;
-        if(StringUtil::String2int(temp, i))
+        if (StringUtil::String2int(temp, i))
         {
             m_port = i;
         }
@@ -94,21 +94,21 @@ bool Url::ParseAuthority(const std::string &authority)
     return true;
 }
 
-bool Url::ParsePath(const std::string &path)
+bool Url::ParsePath(const std::string& path)
 {
-    size_t pos = 0, prev = 0;
+    size_t      pos = 0, prev = 0;
     std::string temp;
 
     pos = path.find("?", prev);
-    if(pos != std::string::npos) // query presents
+    if (pos != std::string::npos) // query presents
     {
         m_path = std::string(path.begin() + prev, path.begin() + pos);
-        prev = pos + 1;
-        pos = path.find("#", prev); // fragment presents
-        if(pos != std::string::npos)
+        prev   = pos + 1;
+        pos    = path.find("#", prev); // fragment presents
+        if (pos != std::string::npos)
         {
             temp = std::string(path.begin() + prev, path.begin() + pos);
-            if(ParseQuery(temp) == false)
+            if (ParseQuery(temp) == false)
             {
                 return false;
             }
@@ -117,7 +117,7 @@ bool Url::ParsePath(const std::string &path)
         else
         {
             temp = std::string(path.begin() + prev, path.end());
-            if(ParseQuery(temp) == false)
+            if (ParseQuery(temp) == false)
             {
                 return false;
             }
@@ -131,13 +131,13 @@ bool Url::ParsePath(const std::string &path)
     return true;
 }
 
-bool Url::ParseQuery(const std::string &query)
+bool Url::ParseQuery(const std::string& query)
 {
     auto q = StringUtil::Split(query, '&');
-    for(auto &token: q)
+    for (auto& token : q)
     {
         auto pair = StringUtil::Split(token, '=');
-        if(pair.size() == 2)
+        if (pair.size() == 2)
         {
             StringUtil::UrlDecode(pair[0]);
             StringUtil::UrlDecode(pair[1]);
@@ -151,9 +151,9 @@ bool Url::ParseQuery(const std::string &query)
 std::string Url::Query2String() const
 {
     std::string retval;
-    for(auto const &entry: m_query)
+    for (auto const& entry : m_query)
     {
-        std::string name = entry.first;
+        std::string name  = entry.first;
         std::string value = entry.second;
         StringUtil::UrlEncode(name);
         StringUtil::UrlEncode(value);
@@ -176,18 +176,18 @@ bool Url::IsValid() const
 std::string Url::ToString(bool full) const
 {
     std::string retval;
-    if(full)
+    if (full)
     {
         retval += Scheme2String(m_scheme) + ":";
-        if(!m_host.empty())
+        if (!m_host.empty())
         {
             retval += "//";
-            if(!m_user.empty())
+            if (!m_user.empty())
             {
                 retval += "@" + m_user;
             }
             retval += m_host;
-            if(m_port != DEFAULT_PORT)
+            if (m_port != DEFAULT_PORT)
             {
                 retval += ":" + std::to_string(m_port);
             }
@@ -196,12 +196,12 @@ std::string Url::ToString(bool full) const
 
     retval += "/" + m_path;
 
-    if(m_query.size() > 0)
+    if (m_query.size() > 0)
     {
         retval += "?" + Query2String();
     }
 
-    if(!m_fragment.empty())
+    if (!m_fragment.empty())
     {
         retval += "#" + m_fragment;
     }
@@ -217,13 +217,13 @@ bool Url::IsInitiaized() const
 void Url::Clear()
 {
     m_initiaized = false;
-    m_scheme = Scheme::Undefined;
-    m_user = "";
-    m_host = "";
-    m_port = DEFAULT_PORT;
-    m_path = "";
+    m_scheme     = Scheme::Undefined;
+    m_user       = "";
+    m_host       = "";
+    m_port       = DEFAULT_PORT;
+    m_path       = "";
     m_query.clear();
-    m_fragment = "";
+    m_fragment     = "";
     m_originalSize = 0;
 }
 
@@ -234,7 +234,7 @@ Url::Scheme Url::GetScheme() const
 
 void Url::SetScheme(Scheme scheme)
 {
-    m_scheme = scheme;
+    m_scheme     = scheme;
     m_initiaized = IsValid();
 }
 
@@ -243,7 +243,7 @@ std::string Url::GetUser() const
     return m_user;
 }
 
-void Url::SetUser(const std::string &value)
+void Url::SetUser(const std::string& value)
 {
     m_user = value;
 }
@@ -253,9 +253,9 @@ std::string Url::GetHost() const
     return m_host;
 }
 
-void Url::SetHost(const std::string &value)
+void Url::SetHost(const std::string& value)
 {
-    m_host = value;
+    m_host       = value;
     m_initiaized = IsValid();
 }
 
@@ -279,15 +279,15 @@ std::string Url::GetNormalizedPath() const
     return (m_path.size() > 0 && m_path.at(0) == '/') ? m_path : '/' + m_path;
 }
 
-void Url::SetPath(const std::string &value)
+void Url::SetPath(const std::string& value)
 {
     m_path = value;
 }
 
-std::string Url::GetQueryValue(const std::string &name) const
+std::string Url::GetQueryValue(const std::string& name) const
 {
     auto it = m_query.find(name);
-    if(it != m_query.end())
+    if (it != m_query.end())
     {
         return it->second;
     }
@@ -295,7 +295,7 @@ std::string Url::GetQueryValue(const std::string &name) const
     return "";
 }
 
-void Url::SetQueryValue(const std::string &name, const std::string &value)
+void Url::SetQueryValue(const std::string& name, const std::string& value)
 {
     m_query[name] = value;
 }
@@ -305,7 +305,7 @@ std::string Url::GetFragment() const
     return m_fragment;
 }
 
-void Url::SetFragment(const std::string &value)
+void Url::SetFragment(const std::string& value)
 {
     m_fragment = value;
 }
@@ -315,18 +315,23 @@ size_t Url::GetOriginalSize() const
     return m_originalSize;
 }
 
-Url::Scheme Url::String2Scheme(const std::string &str)
+Url::Scheme Url::String2Scheme(const std::string& str)
 {
     std::string s = str;
     StringUtil::ToLower(s);
 
-    switch(_(s.c_str()))
+    switch (_(s.c_str()))
     {
-        case _("http"): return Url::Scheme::HTTP;
-        case _("https"): return Url::Scheme::HTTPS;
-        case _("ws"): return Url::Scheme::WS;
-        case _("wss"): return Url::Scheme::WSS;
-        default: break;
+        case _("http"):
+            return Url::Scheme::HTTP;
+        case _("https"):
+            return Url::Scheme::HTTPS;
+        case _("ws"):
+            return Url::Scheme::WS;
+        case _("wss"):
+            return Url::Scheme::WSS;
+        default:
+            break;
     }
 
     return Url::Scheme::Undefined;
@@ -334,16 +339,19 @@ Url::Scheme Url::String2Scheme(const std::string &str)
 
 std::string Url::Scheme2String(Scheme scheme)
 {
-    switch(scheme)
+    switch (scheme)
     {
-        case Url::Scheme::HTTP: return "http";
-        case Url::Scheme::HTTPS: return "https";
-        case Url::Scheme::WS: return "ws";
-        case Url::Scheme::WSS: return "wss";
-        default: break;
+        case Url::Scheme::HTTP:
+            return "http";
+        case Url::Scheme::HTTPS:
+            return "https";
+        case Url::Scheme::WS:
+            return "ws";
+        case Url::Scheme::WSS:
+            return "wss";
+        default:
+            break;
     }
 
     return "";
 }
-
-

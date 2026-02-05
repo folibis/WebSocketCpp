@@ -1,7 +1,6 @@
 #include "DebugPrint.h"
 
-
-using namespace WebCpp;
+using namespace WebSocketCpp;
 
 bool DebugPrint::AllowPrint = false;
 

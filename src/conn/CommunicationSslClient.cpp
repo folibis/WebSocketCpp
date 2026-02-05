@@ -1,24 +1,27 @@
 #ifdef WITH_OPENSSL
-#include <sys/types.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdexcept>
-#include <cstring>
-#include <iostream>
-#include <signal.h>
-#include "Lock.h"
 #include "CommunicationSslClient.h"
 
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-using namespace WebCpp;
+#include <cstring>
+#include <iostream>
+#include <stdexcept>
 
-CommunicationSslClient::CommunicationSslClient(const std::string &cert, const std::string &key) noexcept:
+#include "Lock.h"
 
-    ICommunicationClient(SocketPool::Domain::Inet,
-                         SocketPool::Type::Stream,
-                         SocketPool::Options::ReuseAddr | SocketPool::Options::Ssl)
+using namespace WebSocketCpp;
+
+CommunicationSslClient::CommunicationSslClient(const std::string& cert, const std::string& key) noexcept
+    :
+
+      ICommunicationClient(SocketPool::Domain::Inet,
+          SocketPool::Type::Stream,
+          SocketPool::Options::ReuseAddr | SocketPool::Options::Ssl)
 {
     m_sockets.SetSslCredentials(cert, key);
     m_sockets.SetPort(DEFAULT_SSL_PORT);
@@ -29,11 +32,10 @@ CommunicationSslClient::~CommunicationSslClient()
     Close();
 }
 
-
 bool CommunicationSslClient::Init()
 {
     signal(SIGPIPE, SIG_IGN);
-    if(m_initialized == true)
+    if (m_initialized == true)
     {
         SetLastError("already initialized");
         return true;

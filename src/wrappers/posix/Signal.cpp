@@ -1,10 +1,9 @@
 #include "Signal.h"
 
-using namespace WebCpp;
+using namespace WebSocketCpp;
 
 Signal::Signal()
 {
-
 }
 
 void Signal::Fire()
@@ -12,7 +11,7 @@ void Signal::Fire()
     pthread_cond_signal(&m_signalCondition);
 }
 
-void Signal::Wait(Mutex &mutex)
+void Signal::Wait(Mutex& mutex)
 {
-    pthread_cond_wait(& m_signalCondition, mutex.GetMutex());
+    pthread_cond_wait(&m_signalCondition, mutex.GetMutex());
 }

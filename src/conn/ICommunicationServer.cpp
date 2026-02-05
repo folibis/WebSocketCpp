@@ -1,24 +1,25 @@
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <cstring>
-#include <stdexcept>
-#include "DebugPrint.h"
-#include "Lock.h"
 #include "ICommunicationServer.h"
 
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-using namespace WebCpp;
+#include <cstring>
+#include <stdexcept>
+
+#include "DebugPrint.h"
+#include "Lock.h"
+
+using namespace WebSocketCpp;
 
 ICommunicationServer::ICommunicationServer(SocketPool::Domain domain,
-                                           SocketPool::Type type,
-                                           SocketPool::Options options):
-    m_sockets(MAX_CLIENTS + 1, SocketPool::Service::Server, domain, type, options)
+    SocketPool::Type                                          type,
+    SocketPool::Options                                       options)
+    : m_sockets(MAX_CLIENTS + 1, SocketPool::Service::Server, domain, type, options)
 {
-
 }
 
 void ICommunicationServer::SetPort(int port)
@@ -31,7 +32,7 @@ int ICommunicationServer::GetPort() const
     return m_sockets.GetPort();
 }
 
-void ICommunicationServer::SetHost(const std::string &host)
+void ICommunicationServer::SetHost(const std::string& host)
 {
     m_sockets.SetHost(host);
 }
@@ -48,7 +49,7 @@ bool ICommunicationServer::Init()
 
     try
     {
-        if(m_sockets.Create(true) == ERROR)
+        if (m_sockets.Create(true) == ERROR)
         {
             SetLastError(std::string("server socket create error: ") + m_sockets.GetLastError());
             throw std::runtime_error(GetLastError());
@@ -57,7 +58,7 @@ bool ICommunicationServer::Init()
         retval = true;
     }
 
-    catch(...)
+    catch (...)
     {
         CloseConnection(0);
         DebugPrint() << "CommunicationServer::Init error: " << GetLastError() << std::endl;
@@ -76,12 +77,12 @@ bool ICommunicationServer::Run()
         auto f = std::bind(&ICommunicationServer::ReadThread, this, std::placeholders::_1);
         m_readThread.SetFunction(f);
         m_running = m_readThread.Start();
-        if(m_running == false)
+        if (m_running == false)
         {
             SetLastError(m_readThread.GetLastError());
         }
     }
-    catch(...)
+    catch (...)
     {
         m_running = false;
     }
@@ -95,19 +96,19 @@ bool ICommunicationServer::WaitFor()
     return true;
 }
 
-bool ICommunicationServer::Connect(const std::string &host, int port)
+bool ICommunicationServer::Connect(const std::string& host, int port)
 {
     ClearError();
 
     try
     {
-        if(m_sockets.Bind(host, port) == false)
+        if (m_sockets.Bind(host, port) == false)
         {
             SetLastError(std::string("socket bind error: ") + m_sockets.GetLastError());
             throw std::runtime_error(GetLastError());
         }
 
-        if(m_sockets.Listen() == false)
+        if (m_sockets.Listen() == false)
         {
             SetLastError(std::string("socket listen error: ") + m_sockets.GetLastError());
             throw std::runtime_error(GetLastError());
@@ -116,7 +117,7 @@ bool ICommunicationServer::Connect(const std::string &host, int port)
         return true;
     }
 
-    catch(...)
+    catch (...)
     {
         CloseConnection(0);
         DebugPrint() << "CommunicationServer::Connect error: " << GetLastError() << std::endl;
@@ -126,7 +127,7 @@ bool ICommunicationServer::Connect(const std::string &host, int port)
 
 bool ICommunicationServer::Close(bool wait)
 {
-    if(m_running == true)
+    if (m_running == true)
     {
         m_readThread.Stop(false);
         m_running = false;
@@ -138,11 +139,11 @@ bool ICommunicationServer::Close(bool wait)
 }
 
 bool ICommunicationServer::CloseConnection(int connID)
-{   
+{
     bool retval = m_sockets.CloseSocket(connID);
-    if(retval)
+    if (retval)
     {
-        if(m_closeConnectionCallback != nullptr)
+        if (m_closeConnectionCallback != nullptr)
         {
             m_closeConnectionCallback(connID);
         }
@@ -152,20 +153,20 @@ bool ICommunicationServer::CloseConnection(int connID)
 }
 
 void ICommunicationServer::CloseConnections()
-{  
+{
     m_sockets.CloseSockets();
 }
 
-bool ICommunicationServer::Write(int connID, ByteArray &data)
+bool ICommunicationServer::Write(int connID, ByteArray& data)
 {
     return Write(connID, data, data.size());
 }
 
-bool ICommunicationServer::Write(int connID, ByteArray &data, size_t size)
+bool ICommunicationServer::Write(int connID, ByteArray& data, size_t size)
 {
     ClearError();
 
-    if(m_initialized == false || m_connected == false)
+    if (m_initialized == false || m_connected == false)
     {
         SetLastError("not initialized or not connected");
         return false;
@@ -177,13 +178,13 @@ bool ICommunicationServer::Write(int connID, ByteArray &data, size_t size)
     try
     {
         auto pos = m_sockets.Write(data.data(), size, connID);
-        retval = (pos == size);
-        if(retval == false)
+        retval   = (pos == size);
+        if (retval == false)
         {
             SetLastError("send " + std::to_string(pos) + " of " + std::to_string(size) + " bytes");
         }
     }
-    catch(const std::exception &ex)
+    catch (const std::exception& ex)
     {
         SetLastError(std::string("CommunicationServer::Write() exception: ") + ex.what());
         retval = false;
@@ -192,31 +193,31 @@ bool ICommunicationServer::Write(int connID, ByteArray &data, size_t size)
     return retval;
 }
 
-void *ICommunicationServer::ReadThread(bool &running)
+void* ICommunicationServer::ReadThread(bool& running)
 {
     int retval = (-1);
 
     try
     {
         m_sockets.SetPollRead();
-        while(running)
+        while (running)
         {
-            if(m_sockets.Poll())
+            if (m_sockets.Poll())
             {
                 for (int i = 0; i < m_sockets.GetCount(); i++)
                 {
-                    if(m_sockets.IsPollError(i))
+                    if (m_sockets.IsPollError(i))
                     {
                         CloseConnection(i);
                     }
-                    else if(m_sockets.HasData(i))
+                    else if (m_sockets.HasData(i))
                     {
                         if (i == 0) // new client connected
                         {
                             int id = m_sockets.Accept();
-                            if(id != ERROR)
+                            if (id != ERROR)
                             {
-                                if(m_newConnectionCallback != nullptr)
+                                if (m_newConnectionCallback != nullptr)
                                 {
                                     m_newConnectionCallback(id, m_sockets.GetRemoteAddress(id));
                                 }
@@ -225,9 +226,9 @@ void *ICommunicationServer::ReadThread(bool &running)
                         else // existing socket data received
                         {
                             auto readBytes = m_sockets.Read(m_readBuffer, READ_BUFFER_SIZE, i);
-                            if(readBytes != ERROR)
+                            if (readBytes != ERROR)
                             {
-                                if(m_dataReadyCallback != nullptr)
+                                if (m_dataReadyCallback != nullptr)
                                 {
                                     ByteArray data;
                                     data.insert(data.end(), m_readBuffer, m_readBuffer + readBytes);
@@ -244,7 +245,7 @@ void *ICommunicationServer::ReadThread(bool &running)
             }
         }
     }
-    catch(...)
+    catch (...)
     {
         DebugPrint() << "critical unexpected error occured in the read thread" << std::endl;
     }

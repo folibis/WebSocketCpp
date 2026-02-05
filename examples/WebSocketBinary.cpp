@@ -11,8 +11,8 @@
 #include "common.h"
 #include "example_common.h"
 
-using namespace WebCpp;
-static WebCpp::WebSocketServer* wsServerPtr = nullptr;
+using namespace WebSocketCpp;
+static WebSocketCpp::WebSocketServer* wsServerPtr = nullptr;
 
 void handle_sigint(int)
 {
@@ -25,8 +25,8 @@ int main(int argc, char* argv[])
 
     int              port_http     = DEFAULT_HTTP_PORT;
     int              port_ws       = DEFAULT_WS_PORT;
-    WebCpp::Protocol http_protocol = DEFAULT_HTTP_PROTOCOL;
-    WebCpp::Protocol ws_protocol   = DEFAULT_WS_PROTOCOL;
+    WebSocketCpp::Protocol http_protocol = DEFAULT_HTTP_PROTOCOL;
+    WebSocketCpp::Protocol ws_protocol   = DEFAULT_WS_PROTOCOL;
 
     auto cmdline = CommandLine::Parse(argc, argv);
 
@@ -38,7 +38,7 @@ int main(int argc, char* argv[])
 
     if (cmdline.Exists("-v"))
     {
-        WebCpp::DebugPrint::AllowPrint = true;
+        WebSocketCpp::DebugPrint::AllowPrint = true;
     }
 
     int v;
@@ -50,16 +50,16 @@ int main(int argc, char* argv[])
     std::string s;
     if (cmdline.Set("-r", s) == true)
     {
-        ws_protocol = WebCpp::String2Protocol(s);
+        ws_protocol = WebSocketCpp::String2Protocol(s);
     }
 
     int                     connID = (-1);
     int                     min = 1, max = 100;
-    WebCpp::WebSocketServer wsServer;
+    WebSocketCpp::WebSocketServer wsServer;
     wsServerPtr = &wsServer;
-    WebCpp::ThreadWorker task;
+    WebSocketCpp::ThreadWorker task;
     task.SetFunction([&](bool& running) -> void* {
-        WebCpp::ResponseWebSocket response(connID);
+        WebSocketCpp::ResponseWebSocket response(connID);
         StringUtil::RandInit();
         while (running)
         {
@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
         return nullptr;
     });
 
-    WebCpp::Config& config = WebCpp::Config::Instance();
+    WebSocketCpp::Config& config = WebSocketCpp::Config::Instance();
     config.SetRoot(PUB);
     config.SetWsProtocol(ws_protocol);
     config.SetWsServerPort(port_ws);

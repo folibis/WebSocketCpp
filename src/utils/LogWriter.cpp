@@ -1,11 +1,12 @@
-#include "FileSystem.h"
 #include "LogWriter.h"
-#include <iostream>
+
 #include <cstring>
+#include <iostream>
+
 #include "DebugPrint.h"
+#include "FileSystem.h"
 
 #define DEFAULT_FOLDER "/var/log/webcpp"
-
 
 LogWriter::~LogWriter()
 {
@@ -18,16 +19,16 @@ LogWriter& LogWriter::Instance()
     return instance;
 }
 
-void LogWriter::Write(const std::string &text, LogWriter::LogType type)
+void LogWriter::Write(const std::string& text, LogWriter::LogType type)
 {
-    std::string s = "[" + WebCpp::FileSystem::GetDateTime() + "] " + text;
-    auto &stream = m_streams[static_cast<int>(type)];
-    if(stream.is_open())
+    std::string s      = "[" + WebSocketCpp::FileSystem::GetDateTime() + "] " + text;
+    auto&       stream = m_streams[static_cast<int>(type)];
+    if (stream.is_open())
     {
         stream << s << std::endl;
     }
 
-    WebCpp::DebugPrint() << text << std::endl;
+    WebSocketCpp::DebugPrint() << text << std::endl;
 }
 
 LogWriter::LogWriter()
@@ -39,11 +40,11 @@ bool LogWriter::Open()
 {
     try
     {
-        if(WebCpp::FileSystem::CreateFolder(DEFAULT_FOLDER))
+        if (WebSocketCpp::FileSystem::CreateFolder(DEFAULT_FOLDER))
         {
-            for(int i = 0;i < 3;i ++)
+            for (int i = 0; i < 3; i++)
             {
-                LogType type = static_cast<LogType>(i);
+                LogType     type = static_cast<LogType>(i);
                 std::string file = std::string(DEFAULT_FOLDER) + "/" + LogWriter::LogType2String(type) + ".log";
                 m_streams[i].open(file, std::ofstream::binary | std::ios::app);
             }
@@ -51,7 +52,7 @@ bool LogWriter::Open()
 
         return true;
     }
-    catch(...)
+    catch (...)
     {
         return false;
     }
@@ -61,10 +62,10 @@ bool LogWriter::Close()
 {
     try
     {
-        for(int i = 0;i < 3;i ++)
+        for (int i = 0; i < 3; i++)
         {
-            auto &stream = m_streams[i];
-            if(stream)
+            auto& stream = m_streams[i];
+            if (stream)
             {
                 stream.close();
             }
@@ -72,7 +73,7 @@ bool LogWriter::Close()
 
         return true;
     }
-    catch(...)
+    catch (...)
     {
         return false;
     }
@@ -80,7 +81,7 @@ bool LogWriter::Close()
 
 std::string LogWriter::LogType2String(LogWriter::LogType type)
 {
-    switch(type)
+    switch (type)
     {
         case LogWriter::LogType::Info:
             return "info";
@@ -88,7 +89,8 @@ std::string LogWriter::LogType2String(LogWriter::LogType type)
             return "error";
         case LogWriter::LogType::Access:
             return "access";
-        default: break;
+        default:
+            break;
     }
 
     return "";

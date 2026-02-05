@@ -22,37 +22,40 @@
  *
  */
 
-#ifndef WEBCPP_HTTPCONFIG_H
-#define WEBCPP_HTTPCONFIG_H
+#ifndef WEB_SOCKET_CPP_HTTPCONFIG_H
+#define WEB_SOCKET_CPP_HTTPCONFIG_H
 
-#include "common.h"
 #include <string>
 
+#include "common.h"
+
 #define STRINGIFY(x) #x
-#define TOSTRING(x) STRINGIFY(x)
+#define TOSTRING(x)  STRINGIFY(x)
 
 #define PROPERTY(TYPE, NAME, DEFAULT) \
-public: \
-    TYPE Get##NAME() const \
-    { \
-        return m_##NAME; \
-    } \
-    void Set##NAME(const TYPE &value) \
-    { \
-        m_##NAME = value; \
-        OnChanged(TOSTRING(NAME)); \
-    } \
-\
-private: \
+public:                               \
+    TYPE Get##NAME() const            \
+    {                                 \
+        return m_##NAME;              \
+    }                                 \
+    void Set##NAME(const TYPE& value) \
+    {                                 \
+        m_##NAME = value;             \
+        OnChanged(TOSTRING(NAME));    \
+    }                                 \
+                                      \
+private:                              \
     TYPE m_##NAME = DEFAULT;
 
-namespace WebCpp {
+namespace WebSocketCpp
+{
 
-class Config {
+class Config
+{
 public:
-    static Config &Instance();
-    bool Init();
-    bool Load();
+    static Config& Instance();
+    bool           Init();
+    bool           Load();
 
     std::string RootFolder() const;
     std::string ToString() const;
@@ -60,13 +63,13 @@ public:
 protected:
     Config();
     void SetRootFolder();
-    void OnChanged(const std::string &value);
+    void OnChanged(const std::string& value);
 
 private:
-    bool m_initialized = false;
+    bool        m_initialized = false;
     std::string m_rootFolder;
 
-    PROPERTY(std::string, ServerName, WEBCPP_CANONICAL_NAME)
+    PROPERTY(std::string, ServerName, WEB_SOCKET_CPP_CANONICAL_NAME)
     PROPERTY(std::string, Root, "public")
     PROPERTY(std::string, IndexFile, "index.html")
     PROPERTY(std::string, SslSertificate, "cert.pem")
@@ -79,6 +82,6 @@ private:
     PROPERTY(size_t, MaxBodyFileSize, 20_Mb)
 };
 
-} // namespace WebCpp
+} // namespace WebSocketCpp
 
-#endif // WEBCPP_HTTPCONFIG_H
+#endif // WEB_SOCKET_CPP_HTTPCONFIG_H

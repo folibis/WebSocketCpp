@@ -9,8 +9,8 @@
 #define PUB PUBLIC_DIR
 #define DEFAULT_HTTP_PORT 8080
 #define DEFAULT_WS_PORT 8081
-#define DEFAULT_HTTP_PROTOCOL WebCpp::Protocol::HTTP
-#define DEFAULT_WS_PROTOCOL WebCpp::Protocol::WS
+#define DEFAULT_HTTP_PROTOCOL WebSocketCpp::Protocol::HTTP
+#define DEFAULT_WS_PROTOCOL WebSocketCpp::Protocol::WS
 #define SSL_CERT "~/.ssh/server.cert"
 #define SSL_KEY "~/.ssh/server.key"
 
@@ -80,7 +80,7 @@ public:
                     bool http = false,
                     const std::vector<std::string> &adds = std::vector<std::string>())
     {
-        std::cout << "Usage: " << WebCpp::FileSystem::ExtractFileName(m_exe) << " [options]" << std::endl;
+        std::cout << "Usage: " << WebSocketCpp::FileSystem::ExtractFileName(m_exe) << " [options]" << std::endl;
         std::cout << "where [options] are:" << std::endl;
         std::cout << "\t-p: WebSocket port" << std::endl;
         std::cout << "\t-r: WebSocket protocol [WS,WSS]" << std::endl;

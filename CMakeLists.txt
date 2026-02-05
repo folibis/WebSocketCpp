@@ -3,9 +3,9 @@
 # July 25, 2021
 
 
-option(OPENSSL "Add openssl/https support" ON)
+option(OPENSSL "Add openssl/https support" OFF)
 option(WEBSOCKET "Add websocket support" ON)
-option(EXAMPLES "Build examples" ON)
+option(EXAMPLES "Build examples" OFF)
 
 if(ZLIB)
     set(ZLIB_URL https://zlib.net/)
@@ -78,11 +78,6 @@ if(OPENSSL)
     target_compile_definitions(${PROJECT_NAME} PUBLIC -DWITH_OPENSSL)
     find_package(OpenSSL REQUIRED)
     target_link_libraries(${PROJECT_NAME} PRIVATE OpenSSL::SSL)
-endif()
-
-if(WEBSOCKET)
-    message(STATUS "Configure with WebSocket support")
-    target_compile_definitions(${PROJECT_NAME} PUBLIC -DWITH_WEBSOCKET)
 endif()
 
 set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")

@@ -1,11 +1,11 @@
-#ifndef WEBCPP_FILE_H
-#define WEBCPP_FILE_H
+#ifndef WEB_SOCKET_CPP_FILE_H
+#define WEB_SOCKET_CPP_FILE_H
 
 #include <string>
+
 #include "IErrorable.h"
 
-
-namespace WebCpp
+namespace WebSocketCpp
 {
 
 class File : public IErrorable
@@ -18,29 +18,29 @@ public:
         Write
     };
     File();
-    File(const std::string &file, Mode mode);
+    File(const std::string& file, Mode mode);
     ~File();
-    bool Open(const std::string &file, Mode mode);
-    bool Close();
-    size_t Read(char *buffer, size_t size);
-    size_t Write(const char *buffer, size_t size);
-    bool IsOpened() const;
+    bool   Open(const std::string& file, Mode mode);
+    bool   Close();
+    size_t Read(char* buffer, size_t size);
+    size_t Write(const char* buffer, size_t size);
+    bool   IsOpened() const;
 
 protected:
     int Mode2Flag(Mode mode);
 
 private:
     std::string m_file;
-    Mode m_mode = Mode::Undefined;
-    int m_fd = (-1);
+    Mode        m_mode = Mode::Undefined;
+    int         m_fd   = (-1);
 };
 
-inline File::Mode operator |(File::Mode a, File::Mode b)
+inline File::Mode operator|(File::Mode a, File::Mode b)
 {
     return static_cast<File::Mode>(static_cast<int>(a) | static_cast<int>(b));
 }
 
-inline bool operator ==(File::Mode a, File::Mode b)
+inline bool operator==(File::Mode a, File::Mode b)
 {
     return (static_cast<int>(a) == static_cast<int>(b));
 }
@@ -50,6 +50,6 @@ inline bool contains(File::Mode a, File::Mode b)
     return ((a | b) == b);
 }
 
-}
+} // namespace WebSocketCpp
 
-#endif // WEBCPP_FILE_H
+#endif // WEB_SOCKET_CPP_FILE_H
