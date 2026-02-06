@@ -3,7 +3,7 @@
 # Feb 5, 2026
 
 option(WEBSOCKETCPP_STATIC_LIB "Build as shared library" OFF)
-option(OPENSSL "Add openssl/https support" OFF)
+option(OPENSSL "Add openssl/wss support" OFF)
 option(ZLIB "Add zlib headers compression support" OFF)
 option(EXAMPLES "Build examples" ON)
 option(TESTS "Build with tests" ON)
