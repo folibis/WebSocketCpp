@@ -54,7 +54,7 @@ const ByteArray& ResponseWebSocket::GetData() const
     return m_data;
 }
 
-bool ResponseWebSocket::Send(ICommunicationServer* communication) const
+bool ResponseWebSocket::Send(CommunicationServerBase* communication) const
 {
     try
     {

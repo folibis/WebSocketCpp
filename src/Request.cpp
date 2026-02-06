@@ -180,7 +180,7 @@ void Request::SetRemote(const std::string& remote)
     m_remote = remote;
 }
 
-bool Request::Send(const std::shared_ptr<ICommunicationClient>& communication)
+bool Request::Send(const std::shared_ptr<CommunicationClientBase>& communication)
 {
     ClearError();
 

@@ -1,4 +1,4 @@
-#include "ICommunicationServer.h"
+#include "CommunicationServerBase.h"
 
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -15,34 +15,34 @@
 
 using namespace WebSocketCpp;
 
-ICommunicationServer::ICommunicationServer(SocketPool::Domain domain,
+CommunicationServerBase::CommunicationServerBase(SocketPool::Domain domain,
     SocketPool::Type                                          type,
     SocketPool::Options                                       options)
     : m_sockets(MAX_CLIENTS + 1, SocketPool::Service::Server, domain, type, options)
 {
 }
 
-void ICommunicationServer::SetPort(int port)
+void CommunicationServerBase::SetPort(int port)
 {
     m_sockets.SetPort(port);
 }
 
-int ICommunicationServer::GetPort() const
+int CommunicationServerBase::GetPort() const
 {
     return m_sockets.GetPort();
 }
 
-void ICommunicationServer::SetHost(const std::string& host)
+void CommunicationServerBase::SetHost(const std::string& host)
 {
     m_sockets.SetHost(host);
 }
 
-std::string ICommunicationServer::GetHost() const
+std::string CommunicationServerBase::GetHost() const
 {
     return m_sockets.GetHost();
 }
 
-bool ICommunicationServer::Init()
+bool CommunicationServerBase::Init()
 {
     ClearError();
     bool retval;
@@ -68,13 +68,13 @@ bool ICommunicationServer::Init()
     return retval;
 }
 
-bool ICommunicationServer::Run()
+bool CommunicationServerBase::Run()
 {
     ClearError();
 
     try
     {
-        auto f = std::bind(&ICommunicationServer::ReadThread, this, std::placeholders::_1);
+        auto f = std::bind(&CommunicationServerBase::ReadThread, this, std::placeholders::_1);
         m_readThread.SetFunction(f);
         m_running = m_readThread.Start();
         if (m_running == false)
@@ -90,13 +90,13 @@ bool ICommunicationServer::Run()
     return m_running;
 }
 
-bool ICommunicationServer::WaitFor()
+bool CommunicationServerBase::WaitFor()
 {
     m_readThread.Wait();
     return true;
 }
 
-bool ICommunicationServer::Connect(const std::string& host, int port)
+bool CommunicationServerBase::Connect(const std::string& host, int port)
 {
     ClearError();
 
@@ -125,7 +125,7 @@ bool ICommunicationServer::Connect(const std::string& host, int port)
     }
 }
 
-bool ICommunicationServer::Close(bool wait)
+bool CommunicationServerBase::Close(bool wait)
 {
     if (m_running == true)
     {
@@ -138,7 +138,7 @@ bool ICommunicationServer::Close(bool wait)
     return true;
 }
 
-bool ICommunicationServer::CloseConnection(int connID)
+bool CommunicationServerBase::CloseConnection(int connID)
 {
     bool retval = m_sockets.CloseSocket(connID);
     if (retval)
@@ -152,17 +152,17 @@ bool ICommunicationServer::CloseConnection(int connID)
     return retval;
 }
 
-void ICommunicationServer::CloseConnections()
+void CommunicationServerBase::CloseConnections()
 {
     m_sockets.CloseSockets();
 }
 
-bool ICommunicationServer::Write(int connID, ByteArray& data)
+bool CommunicationServerBase::Write(int connID, ByteArray& data)
 {
     return Write(connID, data, data.size());
 }
 
-bool ICommunicationServer::Write(int connID, ByteArray& data, size_t size)
+bool CommunicationServerBase::Write(int connID, ByteArray& data, size_t size)
 {
     ClearError();
 
@@ -193,7 +193,7 @@ bool ICommunicationServer::Write(int connID, ByteArray& data, size_t size)
     return retval;
 }
 
-void* ICommunicationServer::ReadThread(bool& running)
+void* CommunicationServerBase::ReadThread(bool& running)
 {
     int retval = (-1);
 

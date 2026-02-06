@@ -22,14 +22,14 @@
 
 #include <poll.h>
 
-#include "ICommunicationClient.h"
+#include "CommunicationClientBase.h"
 
 #define BUFFER_SIZE 1024
 
 namespace WebSocketCpp
 {
 
-class CommunicationTcpClient : public ICommunicationClient
+class CommunicationTcpClient : public CommunicationClientBase
 {
 public:
     CommunicationTcpClient();

@@ -24,7 +24,7 @@
 #include <memory>
 
 #include "HttpHeader.h"
-#include "ICommunicationClient.h"
+#include "CommunicationClientBase.h"
 #include "IErrorable.h"
 #include "RequestBody.h"
 #include "Url.h"
@@ -64,7 +64,7 @@ public:
     size_t             GetRequestSize() const;
     std::string        GetRemote() const;
     void               SetRemote(const std::string& remote);
-    bool               Send(const std::shared_ptr<ICommunicationClient>& communication);
+    bool               Send(const std::shared_ptr<CommunicationClientBase>& communication);
     void               Clear();
     void               SetSession(Session* session);
     Session*           GetSession() const;

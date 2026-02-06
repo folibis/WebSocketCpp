@@ -332,7 +332,7 @@ bool SocketPool::Connect(const std::string& host, int port)
 {
     ClearError();
 
-    if (m_fds[MAIN_SOCKET_INDEX].fd == (-1))
+    if (m_service == Service::Server && m_fds[MAIN_SOCKET_INDEX].fd == (-1))
     {
         SetLastError("create main socket first");
         return false;
@@ -686,7 +686,7 @@ bool SocketPool::HasData(size_t index) const
 
 bool SocketPool::IsPollError(size_t index) const
 {
-    auto ev = m_fds[index].revents;
+    int16_t ev = m_fds[index].revents;
     return ev == POLLERR || ev == POLLHUP || ev == POLLNVAL;
 }
 

@@ -35,10 +35,10 @@
 namespace WebSocketCpp
 {
 
-class ICommunicationServer : public ICommunication
+class CommunicationServerBase : public ICommunication
 {
 public:
-    ICommunicationServer(SocketPool::Domain domain,
+    CommunicationServerBase(SocketPool::Domain domain,
         SocketPool::Type                    type,
         SocketPool::Options                 options);
 

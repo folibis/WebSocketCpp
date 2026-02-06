@@ -14,7 +14,7 @@
 using namespace WebSocketCpp;
 
 CommunicationSslServer::CommunicationSslServer(const std::string& cert, const std::string& key) noexcept
-    : ICommunicationServer(SocketPool::Domain::Inet,
+    : CommunicationServerBase(SocketPool::Domain::Inet,
           SocketPool::Type::Stream,
           SocketPool::Options::ReuseAddr | SocketPool::Options::Ssl)
 {
@@ -34,7 +34,7 @@ bool CommunicationSslServer::Init()
         return false;
     }
 
-    m_initialized = ICommunicationServer::Init();
+    m_initialized = CommunicationServerBase::Init();
 
     return m_initialized;
 }
@@ -49,7 +49,7 @@ bool CommunicationSslServer::Connect(const std::string& address, int port)
         return false;
     }
 
-    m_connected = ICommunicationServer::Connect(address, port);
+    m_connected = CommunicationServerBase::Connect(address, port);
     return m_connected;
 }
 

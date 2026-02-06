@@ -6,7 +6,7 @@
 #include <string>
 
 #include "Config.h"
-#include "ICommunicationClient.h"
+#include "CommunicationClientBase.h"
 #include "IErrorable.h"
 #include "IRunnable.h"
 #include "Request.h"
@@ -57,7 +57,7 @@ protected:
     void SetState(State state);
 
 private:
-    std::shared_ptr<ICommunicationClient>   m_connection = nullptr;
+    std::shared_ptr<CommunicationClientBase>   m_connection = nullptr;
     Config&                                 m_config;
     std::function<void(bool)>               m_connectCallback  = nullptr;
     std::function<void(void)>               m_closeCallback    = nullptr;

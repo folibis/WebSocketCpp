@@ -26,7 +26,7 @@
 #include <poll.h>
 #include <pthread.h>
 
-#include "ICommunicationServer.h"
+#include "CommunicationServerBase.h"
 
 #define MAX_CLIENTS      10
 #define READ_BUFFER_SIZE 1024
@@ -34,7 +34,7 @@
 namespace WebSocketCpp
 {
 
-class CommunicationSslServer : public ICommunicationServer
+class CommunicationSslServer : public CommunicationServerBase
 {
 public:
     CommunicationSslServer(const std::string& cert, const std::string& key) noexcept;

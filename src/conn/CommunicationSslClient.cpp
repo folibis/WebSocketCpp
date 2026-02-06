@@ -19,7 +19,7 @@ using namespace WebSocketCpp;
 CommunicationSslClient::CommunicationSslClient(const std::string& cert, const std::string& key) noexcept
     :
 
-      ICommunicationClient(SocketPool::Domain::Inet,
+      CommunicationClientBase(SocketPool::Domain::Inet,
           SocketPool::Type::Stream,
           SocketPool::Options::ReuseAddr | SocketPool::Options::Ssl)
 {
@@ -41,7 +41,7 @@ bool CommunicationSslClient::Init()
         return true;
     }
 
-    m_initialized = ICommunicationClient::Init();
+    m_initialized = CommunicationClientBase::Init();
 
     return m_initialized;
 }

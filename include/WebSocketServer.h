@@ -24,7 +24,7 @@
 #include <memory>
 
 #include "Config.h"
-#include "ICommunicationServer.h"
+#include "CommunicationServerBase.h"
 #include "IErrorable.h"
 #include "IRunnable.h"
 #include "Mutex.h"
@@ -105,7 +105,7 @@ protected:
     RouteWebSocket* GetRoute(const std::string& path);
 
 private:
-    std::shared_ptr<ICommunicationServer> m_server   = nullptr;
+    std::shared_ptr<CommunicationServerBase> m_server   = nullptr;
     Protocol                              m_protocol = Protocol::Undefined;
     ThreadWorker                          m_requestThread;
     Mutex                                 m_queueMutex;

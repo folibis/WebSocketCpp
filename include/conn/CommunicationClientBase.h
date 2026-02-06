@@ -17,8 +17,8 @@
  * SOFTWARE.
  *  */
 
-#ifndef WEB_SOCKET_CPP_ICOMMUNICATIONCLIENT_H
-#define WEB_SOCKET_CPP_ICOMMUNICATIONCLIENT_H
+#ifndef WEB_SOCKET_CPP_CommunicationClientBase_H
+#define WEB_SOCKET_CPP_CommunicationClientBase_H
 
 #include "ICommunication.h"
 #include "SocketPool.h"
@@ -32,10 +32,10 @@
 namespace WebSocketCpp
 {
 
-class ICommunicationClient : public ICommunication
+class CommunicationClientBase : public ICommunication
 {
 public:
-    ICommunicationClient(SocketPool::Domain domain, SocketPool::Type type, SocketPool::Options options);
+    CommunicationClientBase(SocketPool::Domain domain, SocketPool::Type type, SocketPool::Options options);
 
     void        SetPort(int port) override;
     int         GetPort() const override;
@@ -61,7 +61,7 @@ public:
     };
 
 protected:
-    SocketPool                                 m_sockets;
+    SocketPool                                 m_socket;
     std::function<void(const ByteArray& data)> m_dataReadyCallback       = nullptr;
     std::function<void()>                      m_closeConnectionCallback = nullptr;
     bool                                       CloseConnection();
@@ -73,4 +73,4 @@ protected:
 
 } // namespace WebSocketCpp
 
-#endif // WEB_SOCKET_CPP_ICOMMUNICATIONCLIENT_H
+#endif // WEB_SOCKET_CPP_CommunicationClientBase_H

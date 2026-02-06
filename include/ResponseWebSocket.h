@@ -25,7 +25,7 @@
 #ifndef WEB_SOCKET_CPP_RESPONSEWEBSOCKET_H
 #define WEB_SOCKET_CPP_RESPONSEWEBSOCKET_H
 
-#include "ICommunicationServer.h"
+#include "CommunicationServerBase.h"
 #include "common.h"
 #include "common_ws.h"
 
@@ -52,7 +52,7 @@ public:
 
     const ByteArray& GetData() const;
 
-    bool Send(ICommunicationServer* communication) const;
+    bool Send(CommunicationServerBase* communication) const;
     bool Parse(const ByteArray& data);
 
 private:

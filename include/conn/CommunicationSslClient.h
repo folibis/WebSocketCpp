@@ -25,14 +25,14 @@
 #include <poll.h>
 #include <sys/socket.h>
 
-#include "ICommunicationClient.h"
+#include "CommunicationClientBase.h"
 
 #define BUFFER_SIZE 1024
 
 namespace WebSocketCpp
 {
 
-class CommunicationSslClient : public ICommunicationClient
+class CommunicationSslClient : public CommunicationClientBase
 {
 public:
     CommunicationSslClient(const std::string& cert, const std::string& key) noexcept;

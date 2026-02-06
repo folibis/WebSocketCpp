@@ -17,13 +17,13 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 add_definitions(-DPUBLIC_DIR="${CMAKE_CURRENT_SOURCE_DIR}/public")
 
 add_executable(WebSocketServer WebSocketServer.cpp)
-target_link_libraries(WebSocketServer PRIVATE webcpp)
+target_link_libraries(WebSocketServer PRIVATE websocketcpp)
 
 add_executable(WebSocketPingPong WebSocketPingPong.cpp)
-target_link_libraries(WebSocketPingPong PRIVATE webcpp)
+target_link_libraries(WebSocketPingPong PRIVATE websocketcpp)
 
 add_executable(WebSocketBinary WebSocketBinary.cpp)
-target_link_libraries(WebSocketBinary PRIVATE webcpp)
+target_link_libraries(WebSocketBinary PRIVATE websocketcpp)
 
 add_executable(WebSocketClient WebSocketClient.cpp)
-target_link_libraries(WebSocketClient PRIVATE webcpp)
+target_link_libraries(WebSocketClient PRIVATE websocketcpp)

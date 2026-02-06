@@ -149,7 +149,7 @@ void RequestWebSocket::SetData(const ByteArray& data)
     m_data = data;
 }
 
-bool RequestWebSocket::Send(ICommunicationClient* communication) const
+bool RequestWebSocket::Send(CommunicationClientBase* communication) const
 {
     try
     {

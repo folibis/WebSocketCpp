@@ -23,12 +23,12 @@
 #include <poll.h>
 #include <pthread.h>
 
-#include "ICommunicationServer.h"
+#include "CommunicationServerBase.h"
 
 namespace WebSocketCpp
 {
 
-class CommunicationTcpServer : public ICommunicationServer
+class CommunicationTcpServer : public CommunicationServerBase
 {
 public:
     CommunicationTcpServer() noexcept;

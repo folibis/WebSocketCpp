@@ -144,7 +144,7 @@ void Response::SetShouldSend(bool value)
     m_shouldSend = value;
 }
 
-bool Response::Send(ICommunicationServer* communication)
+bool Response::Send(CommunicationServerBase* communication)
 {
     ByteArray header;
 

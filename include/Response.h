@@ -29,7 +29,7 @@
 
 #include "Config.h"
 #include "HttpHeader.h"
-#include "ICommunicationServer.h"
+#include "CommunicationServerBase.h"
 #include "IErrorable.h"
 #include "common.h"
 
@@ -71,7 +71,7 @@ public:
 
     bool IsShouldSend() const;
     void SetShouldSend(bool value);
-    bool Send(ICommunicationServer* communication);
+    bool Send(CommunicationServerBase* communication);
     bool Parse(const ByteArray& data, size_t* all = nullptr, size_t* downoaded = nullptr);
 
     void     SetSession(Session* session);

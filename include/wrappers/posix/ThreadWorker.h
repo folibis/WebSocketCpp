@@ -56,7 +56,7 @@ protected:
     void         SetStop();
 
 private:
-    pthread_t                          m_thread;
+    pthread_t                          m_thread{};
     std::function<ThreadRoutine>       m_func       = nullptr;
     std::function<ThreadFinishRoutine> m_funcFinish = nullptr;
     bool                               m_isRunning  = false;

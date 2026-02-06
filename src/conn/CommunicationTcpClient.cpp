@@ -14,11 +14,11 @@
 using namespace WebSocketCpp;
 
 CommunicationTcpClient::CommunicationTcpClient():
-    ICommunicationClient(SocketPool::Domain::Inet,
+    CommunicationClientBase(SocketPool::Domain::Inet,
                          SocketPool::Type::Stream,
                          SocketPool::Options::ReuseAddr)
 {
-    m_sockets.SetPort(DEFAULT_HTTP_PORT);
+    m_socket.SetPort(DEFAULT_HTTP_PORT);
 
 }
 
@@ -35,7 +35,7 @@ bool CommunicationTcpClient::Init()
         return true;
     }
 
-    m_initialized = ICommunicationClient::Init();
+    m_initialized = CommunicationClientBase::Init();
     return m_initialized;
 }
 

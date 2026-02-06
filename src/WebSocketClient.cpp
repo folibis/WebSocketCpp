@@ -38,9 +38,10 @@ bool WebSocketClient::Open(Request& request)
 {
     ClearError();
 
+    const Url& url = request.GetUrl();
     if (m_connection == nullptr)
     {
-        if (InitConnection(request.GetUrl()) == false)
+        if (InitConnection(url) == false)
         {
             SetLastError("init failed: " + GetLastError());
             LOG(GetLastError(), LogWriter::LogType::Error);
@@ -50,7 +51,7 @@ bool WebSocketClient::Open(Request& request)
 
     if (m_connection->IsConnected() == false)
     {
-        if (m_connection->Connect() == false)
+        if (m_connection->Connect(url.GetHost(), url.GetPort()) == false)
         {
             SetLastError("connection faied: " + m_connection->GetLastError());
             LOG(GetLastError(), LogWriter::LogType::Error);
@@ -60,7 +61,7 @@ bool WebSocketClient::Open(Request& request)
         SetState(State::Connected);
     }
 
-    if (m_connection->Run() == false)
+    if (m_messageCallback != nullptr && m_connection->Run() == false)
     {
         SetLastError("read routine failed: " + m_connection->GetLastError());
         LOG(GetLastError(), LogWriter::LogType::Error);
@@ -295,13 +296,6 @@ bool WebSocketClient::InitConnection(const Url& url)
     if (!m_connection->Init())
     {
         SetLastError("WebSocketClient init failed");
-        LOG(GetLastError(), LogWriter::LogType::Error);
-        return false;
-    }
-
-    if (!m_connection->Run())
-    {
-        SetLastError("WebSocketClient run failed");
         LOG(GetLastError(), LogWriter::LogType::Error);
         return false;
     }

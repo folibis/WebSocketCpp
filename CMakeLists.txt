@@ -1,24 +1,17 @@
-# The WebCpp library
+# The WebSocketCpp library
 # ruslan@muhlinin.com
-# July 25, 2021
+# Feb 5, 2026
 
-
+option(WEBSOCKETCPP_STATIC_LIB "Build as shared library" OFF)
 option(OPENSSL "Add openssl/https support" OFF)
-option(WEBSOCKET "Add websocket support" ON)
-option(EXAMPLES "Build examples" OFF)
-
-if(ZLIB)
-    set(ZLIB_URL https://zlib.net/)
-    set(ZLIB_VERSION zlib-1.2.11)
-    set(ZLIB_ARCHIVE zlib-1.2.11.tar.gz)
-    set(ZLIB_HASH_METHOD SHA256)
-    set(ZLIB_HASH c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1)
-endif()
+option(ZLIB "Add zlib headers compression support" OFF)
+option(EXAMPLES "Build examples" ON)
+option(TESTS "Build with tests" ON)
 
 cmake_minimum_required(VERSION 3.11)
 set(CMAKE_CXX_STANDARD 11)
 
-project(webcpp)
+project(websocketcpp)
 
 if(NOT DEFINED CMAKE_LIBRARY_OUTPUT_DIRECTORY)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
@@ -41,10 +34,21 @@ endif()
 file(GLOB SRC . src/*.cpp src/conn/*.cpp src/utils/*.cpp src/auth/*.cpp src/wrappers/${PLATFORM}/*.cpp)
 file(GLOB INC . include/*.h include/common/*.h include/conn/*.h include/utils/*.h include/auth/*.h include/wrappers/${PLATFORM}/*.h)
 
-add_library(${PROJECT_NAME} SHARED ${SRC} ${INC})
+set(LIBTYPE SHARED)
+if(WEBSOCKETCPP_STATIC_LIB)
+    set(LIBTYPE STATIC)
+endif()
+
+add_library(${PROJECT_NAME} ${LIBTYPE} ${SRC} ${INC})
 set_property(TARGET ${PROJECT_NAME} PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 if(ZLIB)
+    set(ZLIB_URL https://zlib.net/)
+    set(ZLIB_VERSION zlib-1.2.11)
+    set(ZLIB_ARCHIVE zlib-1.2.11.tar.gz)
+    set(ZLIB_HASH_METHOD SHA256)
+    set(ZLIB_HASH c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1)
+
     target_compile_definitions(${PROJECT_NAME} PUBLIC -DWITH_ZLIB)
     if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${ZLIB_ARCHIVE})
         message(STATUS "Downloading zlib archive")
@@ -84,16 +88,20 @@ set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -s")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -s")
 
 target_include_directories(${PROJECT_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/common
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/conn
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/utils
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/auth
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/wrappers/${PLATFORM}
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/common>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/common>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/conn>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/utils>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/wrappers/${PLATFORM}>
     )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE -pthread ${EXTERNAL_LIBS})
 
 if(EXAMPLES)
-    add_subdirectory(examples/)
+    add_subdirectory(examples)
+endif()
+
+if(TESTS)
+    add_subdirectory(tests)
 endif()

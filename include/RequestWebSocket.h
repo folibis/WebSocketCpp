@@ -1,7 +1,7 @@
 #ifndef REQUESTWEBSOCKET_H
 #define REQUESTWEBSOCKET_H
 
-#include "ICommunicationClient.h"
+#include "CommunicationClientBase.h"
 #include "common.h"
 #include "common_ws.h"
 
@@ -20,7 +20,7 @@ public:
     const ByteArray& GetData() const;
     void             SetData(const ByteArray& data);
 
-    bool Send(ICommunicationClient* communication) const;
+    bool Send(CommunicationClientBase* communication) const;
 
 private:
     ByteArray   m_data;
