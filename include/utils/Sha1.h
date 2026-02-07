@@ -20,6 +20,7 @@
 #ifndef WEB_SOCKET_CPP_SHA1_H
 #define WEB_SOCKET_CPP_SHA1_H
 
+#include <array>
 #include <cstdint>
 #include <iostream>
 #include <string>
@@ -28,10 +29,10 @@ class SHA1
 {
 public:
     SHA1();
-    void        update(const std::string& s);
-    void        update(std::istream& is);
-    std::string final();
-    uint8_t*    digest();
+    void                    update(const std::string& s);
+    void                    update(std::istream& is);
+    std::string             final();
+    std::array<uint8_t, 20> digest();
 
     static std::string from_file(const std::string& filename);
 

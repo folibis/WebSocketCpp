@@ -109,7 +109,7 @@ std::string Data::Base64Decode(std::string const& encoded_string)
     return ret;
 }
 
-uint8_t* Data::Sha1Digest(const std::string& string)
+std::array<uint8_t, 20> Data::Sha1Digest(const std::string& string)
 {
     SHA1 checksum;
     checksum.update(string);

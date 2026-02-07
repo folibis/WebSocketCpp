@@ -23,8 +23,8 @@
 #include <deque>
 #include <memory>
 
-#include "Config.h"
 #include "CommunicationServerBase.h"
+#include "Config.h"
 #include "IErrorable.h"
 #include "IRunnable.h"
 #include "Mutex.h"
@@ -82,7 +82,7 @@ protected:
     };
 
     void OnConnected(int connID, const std::string& remote);
-    void OnDataReady(int connID, ByteArray& data);
+    void OnDataReady(int connID, ByteArray data);
     void OnClosed(int connID);
 
     bool  StartRequestThread();
@@ -106,15 +106,15 @@ protected:
 
 private:
     std::shared_ptr<CommunicationServerBase> m_server   = nullptr;
-    Protocol                              m_protocol = Protocol::Undefined;
-    ThreadWorker                          m_requestThread;
-    Mutex                                 m_queueMutex;
-    Mutex                                 m_signalMutex;
-    Mutex                                 m_requestMutex;
-    Signal                                m_signalCondition;
-    std::deque<RequestData>               m_requestQueue;
-    Config&                               m_config;
-    std::vector<RouteWebSocket>           m_routes;
+    Protocol                                 m_protocol = Protocol::Undefined;
+    ThreadWorker                             m_requestThread;
+    Mutex                                    m_queueMutex;
+    Mutex                                    m_signalMutex;
+    Mutex                                    m_requestMutex;
+    Signal                                   m_signalCondition;
+    std::deque<RequestData>                  m_requestQueue;
+    Config&                                  m_config;
+    std::vector<RouteWebSocket>              m_routes;
 };
 
 } // namespace WebSocketCpp

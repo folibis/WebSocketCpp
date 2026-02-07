@@ -80,6 +80,9 @@ private:
     PROPERTY(Protocol, WsProtocol, Protocol::WS)
     PROPERTY(size_t, MaxBodySize, 2_Mb)
     PROPERTY(size_t, MaxBodyFileSize, 20_Mb)
+    PROPERTY(size_t, MaxMessageSize, 10_Mb)
+    PROPERTY(size_t, MaxFrameSize, 1_Mb)
+    PROPERTY(size_t, MaxConnectionMemor, 20_Mb)
 };
 
 } // namespace WebSocketCpp

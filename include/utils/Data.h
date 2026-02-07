@@ -20,16 +20,19 @@
 #ifndef WEB_SOCKET_CPP_DATA_H
 #define WEB_SOCKET_CPP_DATA_H
 
+#include <array>
 #include <cstdint>
 #include <string>
 
 class Data
 {
 public:
-    static std::string Base64Encode(const unsigned char* bytes_to_encode, size_t in_len);
-    static std::string Base64Encode(const std::string& str);
-    static std::string Base64Decode(const std::string& str);
-    static uint8_t*    Sha1Digest(const std::string& string);
+    static std::string             Base64Encode(const unsigned char* bytes_to_encode, size_t in_len);
+    static std::string             Base64Encode(const std::string& str);
+    static std::string             Base64Decode(const std::string& str);
+    static std::array<uint8_t, 20> Sha1Digest(const std::string& string);
+
+    static constexpr size_t SHA1_DIGEST_LENGTH = 20;
 
 #ifdef WITH_ZLIB
     static ByteArray Compress(const ByteArray& data);

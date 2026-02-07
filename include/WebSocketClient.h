@@ -5,8 +5,8 @@
 #include <memory>
 #include <string>
 
-#include "Config.h"
 #include "CommunicationClientBase.h"
+#include "Config.h"
 #include "IErrorable.h"
 #include "IRunnable.h"
 #include "Request.h"
@@ -57,17 +57,17 @@ protected:
     void SetState(State state);
 
 private:
-    std::shared_ptr<CommunicationClientBase>   m_connection = nullptr;
-    Config&                                 m_config;
-    std::function<void(bool)>               m_connectCallback  = nullptr;
-    std::function<void(void)>               m_closeCallback    = nullptr;
-    std::function<void(const std::string&)> m_errorCallback    = nullptr;
-    std::function<void(ResponseWebSocket&)> m_messageCallback  = nullptr;
-    std::function<void(size_t, size_t)>     m_progressCallback = nullptr;
-    std::function<void(State)>              m_stateCallback    = nullptr;
-    State                                   m_state            = State::Undefined;
-    std::string                             m_key;
-    ByteArray                               m_data;
+    std::shared_ptr<CommunicationClientBase> m_connection = nullptr;
+    Config&                                  m_config;
+    std::function<void(bool)>                m_connectCallback  = nullptr;
+    std::function<void(void)>                m_closeCallback    = nullptr;
+    std::function<void(const std::string&)>  m_errorCallback    = nullptr;
+    std::function<void(ResponseWebSocket&)>  m_messageCallback  = nullptr;
+    std::function<void(size_t, size_t)>      m_progressCallback = nullptr;
+    std::function<void(State)>               m_stateCallback    = nullptr;
+    State                                    m_state            = State::Undefined;
+    std::string                              m_key;
+    ByteArray                                m_data;
 };
 
 } // namespace WebSocketCpp

@@ -23,6 +23,8 @@ public:
     bool Send(CommunicationClientBase* communication) const;
 
 private:
+    constexpr static uint64_t MAX_WEBSOCKET_MESSAGE_SIZE = 10 * 1024 * 1024; // 10Mb
+
     ByteArray   m_data;
     bool        m_final       = false;
     size_t      m_size        = 0;

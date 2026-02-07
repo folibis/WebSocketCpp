@@ -29,6 +29,7 @@
 #include <stddef.h>
 
 #include <cstdint>
+#include <vector>
 #ifdef WITH_OPENSSL
 #include <openssl/err.h>
 #include <openssl/ssl.h>
@@ -134,17 +135,17 @@ protected:
 #endif
 
 private:
-    size_t         m_count;
-    Service        m_service = Service::Undefined;
-    Domain         m_domain  = Domain::Undefined;
-    Type           m_type    = Type::Undefined;
-    Options        m_options = Options::None;
-    struct pollfd* m_fds     = nullptr;
+    size_t                     m_count;
+    Service                    m_service = Service::Undefined;
+    Domain                     m_domain  = Domain::Undefined;
+    Type                       m_type    = Type::Undefined;
+    Options                    m_options = Options::None;
+    std::vector<struct pollfd> m_fds;
 #ifdef WITH_OPENSSL
-    std::string m_cert;
-    std::string m_key;
-    SSL_CTX*    m_ctx       = nullptr;
-    SSL**       m_sslClient = nullptr;
+    std::string       m_cert;
+    std::string       m_key;
+    SSL_CTX*          m_ctx = nullptr;
+    std::vector<SSL*> m_sslClient;
 #endif
     std::string m_host = DEFAULT_HOST;
     int         m_port = DEFAULT_PORT;

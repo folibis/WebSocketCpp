@@ -106,18 +106,19 @@ bool WebSocketServer::WaitFor()
 void WebSocketServer::OnMessage(const std::string& path, const std::function<bool(const Request&, ResponseWebSocket&, const ByteArray&)>& func)
 {
 
-    RouteWebSocket* route = GetRoute(path);
-    if (route == nullptr)
+    auto it = std::find_if(m_routes.begin(), m_routes.end(),
+        [&path](const RouteWebSocket& r) { return r.GetPath() == path; });
+
+    if (it != m_routes.end())
     {
-        RouteWebSocket route(path);
-        LOG("register route: " + route.ToString(), LogWriter::LogType::Info);
-        route.SetFunctionMessage(func);
-        m_routes.push_back(std::move(route));
+        it->SetFunctionMessage(func);
+        LOG("Updated route: " + it->ToString(), LogWriter::LogType::Info);
     }
     else
     {
-        route->SetFunctionMessage(func);
-        LOG("register message function for route: " + route->ToString(), LogWriter::LogType::Info);
+        m_routes.emplace_back(path);
+        m_routes.back().SetFunctionMessage(func);
+        LOG("Registered route: " + m_routes.back().ToString(), LogWriter::LogType::Info);
     }
 }
 
@@ -147,7 +148,7 @@ void WebSocketServer::OnConnected(int connID, const std::string& remote)
     InitConnection(connID, remote);
 }
 
-void WebSocketServer::OnDataReady(int connID, ByteArray& data)
+void WebSocketServer::OnDataReady(int connID, ByteArray data)
 {
     PutToQueue(connID, data);
     SendSignal();
@@ -219,7 +220,7 @@ void WebSocketServer::PutToQueue(int connID, ByteArray& data)
     {
         if (req.connID == connID)
         {
-            req.data.insert(req.data.end(), data.begin(), data.end());
+            req.data.insert(req.data.end(), std::make_move_iterator(data.begin()), std::make_move_iterator(data.end()));
             break;
         }
     }
@@ -404,8 +405,8 @@ bool WebSocketServer::ProcessRequest(Request& request)
             std::string key = request.GetHeader().GetHeader("Sec-WebSocket-Key");
             key             = key + WEBSOCKET_KEY_TOKEN;
 
-            uint8_t* buffer = Data::Sha1Digest(key);
-            key             = Data::Base64Encode(buffer, 20);
+            auto buffer = Data::Sha1Digest(key);
+            key         = Data::Base64Encode(buffer.data(), Data::SHA1_DIGEST_LENGTH);
 
             response.SetResponseCode(101);
             response.AddHeader(HttpHeader::HeaderType::Date, FileSystem::GetDateTime());

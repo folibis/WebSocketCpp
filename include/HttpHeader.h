@@ -120,6 +120,13 @@ public:
 
     struct Header
     {
+        Header() {}
+        Header(HttpHeader::HeaderType _type, const std::string& _name, const std::string& _value)
+        {
+            type = _type;
+            name = _name;
+            value = _value;
+        }
         HttpHeader::HeaderType    type  = HttpHeader::HeaderType::Undefined;
         std::string               name  = "";
         std::string               value = "";
@@ -168,7 +175,7 @@ protected:
     bool ParseHeaders(const ByteArray& data, const StringUtil::Ranges& ranges);
 
 private:
-    HeaderRole          m_role;
+    HeaderRole          m_role = HeaderRole::Undefined;
     bool                m_complete   = false;
     std::vector<Header> m_headers    = {};
     std::string         m_version    = "HTTP/1.1";

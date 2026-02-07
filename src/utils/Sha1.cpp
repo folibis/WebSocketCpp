@@ -1,5 +1,6 @@
 #include "Sha1.h"
 
+#include <array>
 #include <cstring>
 #include <fstream>
 #include <iomanip>
@@ -101,10 +102,9 @@ std::string SHA1::final()
     return result.str();
 }
 
-uint8_t* SHA1::digest()
+std::array<uint8_t, 20> SHA1::digest()
 {
-    static uint8_t buffer[20];
-
+    std::array<uint8_t, 20> buffer;
     prepare();
 
     for (size_t i = 0; i < DIGEST_INTS; i++)

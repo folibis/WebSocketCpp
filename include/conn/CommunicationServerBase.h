@@ -39,8 +39,8 @@ class CommunicationServerBase : public ICommunication
 {
 public:
     CommunicationServerBase(SocketPool::Domain domain,
-        SocketPool::Type                    type,
-        SocketPool::Options                 options);
+        SocketPool::Type                       type,
+        SocketPool::Options                    options);
 
     void        SetPort(int port) override;
     int         GetPort() const override;
@@ -61,7 +61,7 @@ public:
         m_newConnectionCallback = callback;
         return true;
     };
-    virtual bool SetDataReadyCallback(const std::function<void(int, ByteArray& data)>& callback)
+    virtual bool SetDataReadyCallback(const std::function<void(int, ByteArray data)>& callback)
     {
         m_dataReadyCallback = callback;
         return true;
@@ -82,7 +82,7 @@ protected:
     char         m_readBuffer[READ_BUFFER_SIZE];
 
     std::function<void(int, const std::string&)> m_newConnectionCallback   = nullptr;
-    std::function<void(int, ByteArray& data)>    m_dataReadyCallback       = nullptr;
+    std::function<void(int, ByteArray data)>     m_dataReadyCallback       = nullptr;
     std::function<void(int)>                     m_closeConnectionCallback = nullptr;
 };
 

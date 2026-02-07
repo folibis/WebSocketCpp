@@ -27,7 +27,7 @@ SocketPool::SocketPool(size_t count, Service service, Domain domain, Type type, 
       m_type(type),
       m_options(options)
 {
-    m_fds = new struct pollfd[count]{};
+    m_fds.resize(count);
     for (auto i = 0; i < count; i++)
     {
         m_fds[i].fd = (-1);
@@ -35,29 +35,12 @@ SocketPool::SocketPool(size_t count, Service service, Domain domain, Type type, 
 #ifdef WITH_OPENSSL
     if (IsContains(m_options, Options::Ssl))
     {
-        m_sslClient = new SSL*[count];
+        m_sslClient.resize(count);
     }
 #endif
 }
 
-SocketPool::~SocketPool()
-{
-    if (m_fds != nullptr)
-    {
-        delete[] m_fds;
-        m_fds = nullptr;
-    }
-#ifdef WITH_OPENSSL
-    if (IsContains(m_options, Options::Ssl))
-    {
-        {
-            if (m_sslClient != nullptr)
-                delete[] m_sslClient;
-            m_sslClient = nullptr;
-        }
-    }
-#endif
-}
+SocketPool::~SocketPool() = default;
 
 int SocketPool::Create(bool main)
 {
@@ -675,7 +658,7 @@ void SocketPool::SetPollWrite()
 
 bool SocketPool::Poll()
 {
-    auto retval = poll(m_fds, m_count, POLL_TIMEOUT);
+    auto retval = poll(m_fds.data(), m_count, POLL_TIMEOUT);
     return (retval > 0);
 }
 

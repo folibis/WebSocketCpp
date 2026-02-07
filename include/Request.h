@@ -77,14 +77,14 @@ protected:
     ByteArray BuildHeaders() const;
 
 private:
-    int                                m_connID;
+    int                                m_connID{-1};
     Url                                m_url;
     HttpHeader                         m_header;
     Method                             m_method            = Method::Undefined;
     std::string                        m_httpVersion       = "HTTP/1.1";
     size_t                             m_requestLineLength = 0;
     std::map<std::string, std::string> m_args;
-    RequestBody                        m_requestBody;
+    RequestBody                        m_requestBody{};
     std::string                        m_remote;
     Session*                           m_session = nullptr;
 };

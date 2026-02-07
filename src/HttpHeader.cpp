@@ -7,7 +7,8 @@ using namespace WebSocketCpp;
 
 HttpHeader::Header HttpHeader::Header::defaultHeader = HttpHeader::Header();
 
-HttpHeader::HttpHeader(HeaderRole role)
+HttpHeader::HttpHeader(HeaderRole role):
+      m_role(role)
 {
 }
 
@@ -465,11 +466,8 @@ void HttpHeader::SetHeader(const std::string& name, const std::string& value)
             return;
         }
     }
-    HttpHeader::Header header;
-    header.type  = String2HeaderType(name);
-    header.name  = name;
-    header.value = value;
-    m_headers.push_back(std::move(header));
+
+    m_headers.emplace_back(String2HeaderType(name), name, value);
 }
 
 void HttpHeader::Clear()

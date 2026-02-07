@@ -3,6 +3,7 @@
 #include <cstring>
 #include <limits>
 
+#include "Config.h"
 #include "StringUtil.h"
 
 using namespace WebSocketCpp;
@@ -65,11 +66,28 @@ bool RequestWebSocket::Parse(const ByteArray& data)
                 break;
         }
 
+        const Config& config = Config::Instance();
         if (payloadSize > 0)
         {
+            if (payloadSize > config.GetMaxFrameSize())
+            {
+                return false;
+            }
+
+            if (m_data.size() + payloadSize > config.GetMaxMessageSize())
+            {
+                return false;
+            }
+
             size_t              maskHeaderSize = 0;
             WebSocketHeaderMask mask;
             size_t              headers_size = headerSize + sizeHeaderSize;
+
+            if (headers_size > SIZE_MAX - payloadSize)
+            {
+                return false;
+            }
+
             if (header.flags2.Mask == 1)
             {
                 maskHeaderSize = sizeof(WebSocketHeaderMask);
@@ -88,7 +106,7 @@ bool RequestWebSocket::Parse(const ByteArray& data)
             if (dataSize >= messageFullSize)
             {
                 // according to rfc6455#section-5.3 server must ignore unmasked data
-                // but anyway we support such unstandard clients
+                // but anyway we support such non-standard clients
                 if (header.flags2.Mask == 1)
                 {
                     ByteArray encoded(payloadSize);

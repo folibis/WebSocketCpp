@@ -192,8 +192,8 @@ void WebSocketClient::OnDataReady(const ByteArray& data)
                     {
                         h                  = header.GetHeader("Sec-WebSocket-Accept");
                         std::string key    = m_key + WEBSOCKET_KEY_TOKEN;
-                        uint8_t*    buffer = Data::Sha1Digest(key);
-                        key                = Data::Base64Encode(buffer, 20);
+                        auto        buffer = Data::Sha1Digest(key);
+                        key                = Data::Base64Encode(buffer.data(), Data::SHA1_DIGEST_LENGTH);
                         if (h == key)
                         {
                             SetState(State::BinaryMessage);

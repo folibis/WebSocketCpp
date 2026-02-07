@@ -230,9 +230,7 @@ void* CommunicationServerBase::ReadThread(bool& running)
                             {
                                 if (m_dataReadyCallback != nullptr)
                                 {
-                                    ByteArray data;
-                                    data.insert(data.end(), m_readBuffer, m_readBuffer + readBytes);
-                                    m_dataReadyCallback(i, data);
+                                    m_dataReadyCallback(i, ByteArray(m_readBuffer, m_readBuffer + readBytes));
                                 }
                             }
                             else
