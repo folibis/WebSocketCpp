@@ -5,8 +5,8 @@
 option(WEBSOCKETCPP_STATIC_LIB "Build as shared library" OFF)
 option(OPENSSL "Add openssl/wss support" OFF)
 option(ZLIB "Add zlib headers compression support" OFF)
-option(EXAMPLES "Build examples" ON)
-option(TESTS "Build with tests" ON)
+option(WEBSOCKETCPP_EXAMPLES "Build examples" ON)
+option(WEBSOCKETCPP_TESTS "Build with tests" ON)
 
 cmake_minimum_required(VERSION 3.11)
 set(CMAKE_CXX_STANDARD 11)
@@ -92,11 +92,11 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 target_link_libraries(${PROJECT_NAME} PRIVATE -pthread ${EXTERNAL_LIBS})
 
-if(EXAMPLES)
+if(WEBSOCKETCPP_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
-if(TESTS)
+if(WEBSOCKETCPP_TESTS)
     enable_testing()
     add_subdirectory(tests)
 endif()
