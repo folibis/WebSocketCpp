@@ -21,6 +21,7 @@
 #define WEB_SOCKET_CPP_STRINGUTIL_H
 
 #include <map>
+#include <random>
 #include <string>
 
 #include "common.h"
@@ -47,6 +48,7 @@ public:
     static std::string&                       RTrim(std::string& str, const std::string& chars);
     static std::string&                       Trim(std::string& str, const std::string& chars = " \r\n\t");
     static bool                               String2int(const std::string& str, int& value, int base = 10);
+    static bool                               String2uint64(const std::string& str, uint64_t& value);
     static size_t                             FindOneOf(const std::string& str, const std::string& chars, char& ch, int pos = 0);
     static void                               ToLower(std::string& str);
     static void                               ToUpper(std::string& str);
@@ -61,8 +63,12 @@ public:
     static void                               RandInit();
     static uint32_t                           GetRand(uint32_t min, uint32_t max);
     static bool                               Compare(const WebSocketCpp::ByteArray& arr1, const WebSocketCpp::ByteArray& arr2);
+    static bool                               Compare(const std::string& a, const std::string& b);
     static std::string                        GenerateRandomString(size_t length = 20, bool uppercase = true, bool special = true);
     static std::map<std::string, std::string> ParseParamString(const std::string& str, size_t start = 0);
+
+private:
+    static std::mt19937 m_rng;
 };
 
 #endif // WEB_SOCKET_CPP_STRINGUTIL_H

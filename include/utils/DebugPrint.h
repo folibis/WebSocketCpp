@@ -20,7 +20,10 @@
 #ifndef WEB_SOCKET_CPP_DEBUG_PRINT_H
 #define WEB_SOCKET_CPP_DEBUG_PRINT_H
 
+#include <cstdint>
+#include <iomanip>
 #include <iostream>
+#include <vector>
 
 namespace WebSocketCpp
 {
@@ -38,6 +41,23 @@ public:
             std::cout << t;
         }
 
+        return *this;
+    }
+
+    DebugPrint& operator<<(const std::vector<uint8_t>& vec)
+    {
+        if (DebugPrint::AllowPrint)
+        {
+            std::cout << "[";
+            for (size_t i = 0; i < vec.size(); ++i)
+            {
+                std::cout << "0x" << std::hex << std::setw(2) << std::setfill('0')
+                << static_cast<int>(vec[i]) << std::dec;
+                if (i < vec.size() - 1)
+                    std::cout << ", ";
+            }
+            std::cout << "]";
+        }
         return *this;
     }
 

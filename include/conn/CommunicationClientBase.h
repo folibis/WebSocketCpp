@@ -68,7 +68,7 @@ protected:
 
     ThreadWorker m_thread;
     void*        ReadThread(bool& running);
-    char         m_readBuffer[BUFFER_SIZE];
+    char         m_readBuffer[BUFFER_SIZE]{};
 };
 
 } // namespace WebSocketCpp

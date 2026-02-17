@@ -35,14 +35,17 @@ RequestBody::RequestBody(RequestBody&& other)
 
 RequestBody& RequestBody::operator=(RequestBody&& other)
 {
-    m_values      = std::move(other.m_values);
-    m_contentType = other.m_contentType;
-    m_tempFolder  = other.m_tempFolder;
+    if (this != &other)
+    {
+        m_values      = std::move(other.m_values);
+        m_contentType = other.m_contentType;
+        m_tempFolder  = other.m_tempFolder;
 
-    other.m_values.clear();
-    other.m_values.shrink_to_fit();
-    other.m_contentType = ContentType::Undefined;
-    other.m_tempFolder  = "";
+        other.m_values.clear();
+        other.m_values.shrink_to_fit();
+        other.m_contentType = ContentType::Undefined;
+        other.m_tempFolder  = "";
+    }
 
     return *this;
 }
@@ -176,7 +179,7 @@ bool RequestBody::ParseUrlEncoded(const ByteArray& data, size_t offset, const By
                 ByteArray(val.begin(), val.end())});
         }
     }
-    retval = true;
+
     return retval;
 }
 
@@ -190,7 +193,7 @@ bool RequestBody::ParseText(const ByteArray& data, size_t offset, const ByteArra
         std::string(contentType.begin(), contentType.end()),
         "",
         ByteArray(data.begin() + offset, data.end())});
-    retval = true;
+
     return retval;
 }
 

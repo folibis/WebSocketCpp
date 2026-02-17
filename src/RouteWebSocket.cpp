@@ -7,9 +7,17 @@ RouteWebSocket::RouteWebSocket(const std::string& path)
 {
 }
 
-bool RouteWebSocket::SetFunctionRequest(const RouteWebSocket::RouteFuncRequest& f)
+RouteWebSocket::RouteWebSocket(const std::string& path, RouteFuncMessage message_func, RouteFuncRequest request_func)
+    : Route(path, Method::WEBSOCKET),
+      m_funcMessage(std::move(message_func)),
+      m_funcRequest(std::move(request_func))
+
 {
-    m_funcRequest = f;
+}
+
+bool RouteWebSocket::SetFunctionRequest(RouteFuncRequest f)
+{
+    m_funcRequest = std::move(f);
     return true;
 }
 
@@ -18,9 +26,9 @@ const RouteWebSocket::RouteFuncRequest& RouteWebSocket::GetFunctionRequest() con
     return m_funcRequest;
 }
 
-bool RouteWebSocket::SetFunctionMessage(const RouteWebSocket::RouteFuncMessage& f)
+bool RouteWebSocket::SetFunctionMessage(RouteFuncMessage f)
 {
-    m_funcMessage = f;
+    m_funcMessage = std::move(f);
     return true;
 }
 

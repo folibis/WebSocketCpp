@@ -181,7 +181,7 @@ bool RequestWebSocket::Send(CommunicationClientBase* communication) const
 
         if (dataSize < 126)
         {
-            header.flags2.PayloadLen = m_data.size();
+            header.flags2.PayloadLen = static_cast<uint8_t>(dataSize & 0xFF);
         }
         else
         {
@@ -231,7 +231,7 @@ bool RequestWebSocket::Send(CommunicationClientBase* communication) const
         response.insert(response.end(), maskBuffer.begin(), maskBuffer.end());
 
         ByteArray encoded(m_data.size());
-        for (auto i = 0; i < m_data.size(); i++)
+        for (auto i = 0; i < dataSize; i++)
         {
             encoded[i] = m_data[i] ^ mask.bytes[i % 4];
         }

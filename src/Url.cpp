@@ -17,19 +17,24 @@ bool Url::Parse(const std::string& url, bool full)
     size_t      pos = 0, prev = 0;
     std::string temp;
 
+    Clear();
+    ClearError();
+
     m_originalSize = url.size();
 
     if (full)
     {
         pos = url.find(':');
-        if (pos == std::string::npos) // scheme is not specified
+        if (pos == std::string::npos)
         {
+            SetLastError("scheme is not specified");
             return false;
         }
         temp     = std::string(url.begin(), url.begin() + pos);
         m_scheme = String2Scheme(temp);
         if (m_scheme == Url::Scheme::Undefined)
         {
+            SetLastError("unsupported scheme");
             return false;
         }
 
@@ -43,14 +48,36 @@ bool Url::Parse(const std::string& url, bool full)
                 m_port = DEFAULT_PORT;
         }
 
-        prev = pos + 3;
-        char ch;
-        pos = StringUtil::FindOneOf(url, "/#?", ch, prev);
-        if (pos != std::string::npos) // authority presents
+        prev = pos + 1; // skip ':'
+        if (url.substr(prev, 2) == "//")
         {
-            std::string authority = std::string(url.begin() + prev, url.begin() + pos);
-            ParseAuthority(authority);
-            prev = pos + 1;
+            prev += 2; // skip '//'
+
+            char ch;
+            pos = StringUtil::FindOneOf(url, "/?#", ch, prev);
+
+            std::string authority;
+            if (pos != std::string::npos)
+            {
+                authority = std::string(url.begin() + prev, url.begin() + pos);
+                prev      = pos;
+            }
+            else
+            {
+                authority = std::string(url.begin() + prev, url.end());
+                prev      = url.size();
+            }
+
+            if (!ParseAuthority(authority))
+            {
+                return false;
+            }
+
+            if (m_host.empty())
+            {
+                SetLastError("host not specified");
+                return false;
+            }
         }
     }
 
@@ -83,6 +110,7 @@ bool Url::ParseAuthority(const std::string& authority)
         }
         else
         {
+            SetLastError("incorrect port");
             return false;
         }
     }
@@ -96,20 +124,23 @@ bool Url::ParseAuthority(const std::string& authority)
 
 bool Url::ParsePath(const std::string& path)
 {
-    size_t      pos = 0, prev = 0;
+    size_t      pos  = 0;
+    size_t      prev = 0;
     std::string temp;
 
-    pos = path.find("?", prev);
-    if (pos != std::string::npos) // query presents
+    pos = path.find('?');
+    if (pos != std::string::npos)
     {
         m_path = std::string(path.begin() + prev, path.begin() + pos);
         prev   = pos + 1;
-        pos    = path.find("#", prev); // fragment presents
+
+        pos = path.find('#', prev);
         if (pos != std::string::npos)
         {
             temp = std::string(path.begin() + prev, path.begin() + pos);
-            if (ParseQuery(temp) == false)
+            if (!ParseQuery(temp))
             {
+                SetLastError("query parsing failed");
                 return false;
             }
             m_fragment = std::string(path.begin() + pos + 1, path.end());
@@ -117,15 +148,25 @@ bool Url::ParsePath(const std::string& path)
         else
         {
             temp = std::string(path.begin() + prev, path.end());
-            if (ParseQuery(temp) == false)
+            if (!ParseQuery(temp))
             {
+                SetLastError("query parsing failed");
                 return false;
             }
         }
     }
     else
     {
-        m_path = path;
+        pos = path.find('#');
+        if (pos != std::string::npos)
+        {
+            m_path     = std::string(path.begin(), path.begin() + pos);
+            m_fragment = std::string(path.begin() + pos + 1, path.end());
+        }
+        else
+        {
+            m_path = path;
+        }
     }
 
     return true;
@@ -184,7 +225,7 @@ std::string Url::ToString(bool full) const
             retval += "//";
             if (!m_user.empty())
             {
-                retval += "@" + m_user;
+                retval += m_user + "@";
             }
             retval += m_host;
             if (m_port != DEFAULT_PORT)
@@ -196,7 +237,7 @@ std::string Url::ToString(bool full) const
 
     retval += "/" + m_path;
 
-    if (m_query.size() > 0)
+    if (!m_query.empty())
     {
         retval += "?" + Query2String();
     }

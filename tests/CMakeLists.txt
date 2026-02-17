@@ -12,7 +12,10 @@ FetchContent_MakeAvailable(googletest)
 
 add_executable(WebSocketCppTest websocketcpp_test.cpp)
 add_test(NAME WebSocketCppTest COMMAND WebSocketCppTest)
-
 target_link_libraries(WebSocketCppTest PRIVATE websocketcpp gtest_main)
+
+add_executable(WebSocketCppUrlTest websocketcpp_url_test.cpp)
+add_test(NAME WebSocketCppUrlTest COMMAND WebSocketCppUrlTest)
+target_link_libraries(WebSocketCppUrlTest PRIVATE websocketcpp gtest_main)
+
 include(GoogleTest)
-gtest_discover_tests(WebSocketCppTest DISCOVERY_MODE PRE_TEST)

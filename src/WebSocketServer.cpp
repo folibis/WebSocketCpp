@@ -30,11 +30,11 @@ bool WebSocketServer::Init()
     switch (m_protocol)
     {
         case Protocol::WS:
-            m_server = std::make_shared<CommunicationTcpServer>();
+            m_server = std::unique_ptr<CommunicationServerBase>(new CommunicationTcpServer);
             break;
 #ifdef WITH_OPENSSL
         case Protocol::WSS:
-            m_server = std::make_shared<CommunicationSslServer>(m_config.GetSslSertificate(), m_config.GetSslKey());
+            m_server = std::unique_ptr<CommunicationServerBase>(new CommunicationSslServer(m_config.GetSslSertificate(), m_config.GetSslKey()));
             break;
 #endif
         default:
@@ -60,11 +60,11 @@ bool WebSocketServer::Init()
 
     FileSystem::ChangeDir(FileSystem::GetApplicationFolder());
 
-    auto f1 = std::bind(&WebSocketServer::OnConnected, this, std::placeholders::_1, std::placeholders::_2);
+    auto f1 = std::bind(&WebSocketServer::ClientConnected, this, std::placeholders::_1, std::placeholders::_2);
     m_server->SetNewConnectionCallback(f1);
-    auto f2 = std::bind(&WebSocketServer::OnDataReady, this, std::placeholders::_1, std::placeholders::_2);
+    auto f2 = std::bind(&WebSocketServer::DataReady, this, std::placeholders::_1, std::placeholders::_2);
     m_server->SetDataReadyCallback(f2);
-    auto f3 = std::bind(&WebSocketServer::OnClosed, this, std::placeholders::_1);
+    auto f3 = std::bind(&WebSocketServer::ClientDisconnected, this, std::placeholders::_1);
     m_server->SetCloseConnectionCallback(f3);
 
     if (StartRequestThread() == false)
@@ -103,23 +103,32 @@ bool WebSocketServer::WaitFor()
     return m_server->WaitFor();
 }
 
-void WebSocketServer::OnMessage(const std::string& path, const std::function<bool(const Request&, ResponseWebSocket&, const ByteArray&)>& func)
+void WebSocketServer::OnMessage(const std::string& path, OnMessageCallback func)
 {
-
+    Lock lock(m_routeMutex);
     auto it = std::find_if(m_routes.begin(), m_routes.end(),
         [&path](const RouteWebSocket& r) { return r.GetPath() == path; });
 
     if (it != m_routes.end())
     {
-        it->SetFunctionMessage(func);
+        it->SetFunctionMessage(std::move(func));
         LOG("Updated route: " + it->ToString(), LogWriter::LogType::Info);
     }
     else
     {
-        m_routes.emplace_back(path);
-        m_routes.back().SetFunctionMessage(func);
+        m_routes.emplace_back(path, func);
         LOG("Registered route: " + m_routes.back().ToString(), LogWriter::LogType::Info);
     }
+}
+
+void WebSocketServer::OnConnect(OnConnectCallback func)
+{
+    m_connect_callback = std::move(func);
+}
+
+void WebSocketServer::OnDisconnect(OnDisconnectCallback func)
+{
+    m_disconnect_callback = std::move(func);
 }
 
 bool WebSocketServer::SendResponse(const ResponseWebSocket& response)
@@ -142,21 +151,35 @@ std::string WebSocketServer::ToString() const
     return m_config.ToString();
 }
 
-void WebSocketServer::OnConnected(int connID, const std::string& remote)
+void WebSocketServer::ClientConnected(int connID, const std::string& remote)
 {
     LOG(std::string("client connected: #") + std::to_string(connID) + ", " + remote, LogWriter::LogType::Access);
     InitConnection(connID, remote);
+    if (m_connect_callback)
+    {
+        auto request_data = getRequest(connID);
+        m_connect_callback(request_data->request);
+    }
 }
 
-void WebSocketServer::OnDataReady(int connID, ByteArray data)
+void WebSocketServer::DataReady(int connID, ByteArray data)
 {
-    PutToQueue(connID, data);
+    PutToQueue(connID, std::move(data));
     SendSignal();
 }
 
-void WebSocketServer::OnClosed(int connID)
+void WebSocketServer::ClientDisconnected(int connID)
 {
     LOG(std::string("websocket connection closed: #") + std::to_string(connID), LogWriter::LogType::Access);
+
+    if (m_disconnect_callback)
+    {
+        auto request_data = getRequest(connID);
+        if (request_data != nullptr)
+        {
+            m_disconnect_callback(request_data->request);
+        }
+    }
     RemoveFromQueue(connID);
 }
 
@@ -212,10 +235,9 @@ void WebSocketServer::WaitForSignal()
     m_signalCondition.Wait(m_signalMutex);
 }
 
-void WebSocketServer::PutToQueue(int connID, ByteArray& data)
+void WebSocketServer::PutToQueue(int connID, ByteArray&& data)
 {
     Lock lock(m_queueMutex);
-
     for (auto& req : m_requestQueue)
     {
         if (req.connID == connID)
@@ -236,15 +258,10 @@ void WebSocketServer::InitConnection(int connID, const std::string& remote)
 {
     Lock lock(m_queueMutex);
 
-    for (auto& req : m_requestQueue)
+    if (getRequest(connID) == nullptr)
     {
-        if (req.connID == connID)
-        {
-            return;
-        }
+        m_requestQueue.emplace_back(connID, remote);
     }
-
-    m_requestQueue.push_back(RequestData(connID, remote));
 }
 
 bool WebSocketServer::CheckData()
@@ -304,7 +321,7 @@ bool WebSocketServer::CheckWsFrame(RequestData& requestData)
     {
         size_t size = request.GetSize();
         requestData.data.erase(requestData.data.begin(), requestData.data.begin() + size);
-        requestData.requestList.push_back(std::move(request));
+        requestData.requestList.emplace_back(std::move(request));
         requestData.readyForDispatch = true;
         requestData.handshake        = true;
         retval                       = true;
@@ -409,9 +426,9 @@ bool WebSocketServer::ProcessRequest(Request& request)
             key         = Data::Base64Encode(buffer.data(), Data::SHA1_DIGEST_LENGTH);
 
             response.SetResponseCode(101);
-            response.AddHeader(HttpHeader::HeaderType::Date, FileSystem::GetDateTime());
-            response.AddHeader(HttpHeader::HeaderType::Upgrade, "websocket");
-            response.AddHeader(HttpHeader::HeaderType::Connection, "upgrade");
+            response.AddHeader(Header::HeaderType::Date, FileSystem::GetDateTime());
+            response.AddHeader(Header::HeaderType::Upgrade, "websocket");
+            response.AddHeader(Header::HeaderType::Connection, "upgrade");
             response.AddHeader("Sec-WebSocket-Accept", key);
             response.AddHeader("Sec-WebSocket-Version", WS_VERSION);
         }
@@ -434,6 +451,8 @@ bool WebSocketServer::ProcessWsRequest(Request& request, const RequestWebSocket&
     {
         case MessageType::Text:
         case MessageType::Binary:
+        {
+            Lock lock(m_routeMutex);
             for (auto& route : m_routes)
             {
                 if (route.IsMatch(request))
@@ -454,7 +473,8 @@ bool WebSocketServer::ProcessWsRequest(Request& request, const RequestWebSocket&
                     }
                 }
             }
-            break;
+        }
+        break;
         case MessageType::Ping:
             response.WriteBinary(wsRequest.GetData());
             response.SetMessageType(MessageType::Pong);
@@ -480,6 +500,19 @@ RouteWebSocket* WebSocketServer::GetRoute(const std::string& path)
         if (m_routes.at(i).GetPath() == path)
         {
             return &(m_routes.at(i));
+        }
+    }
+
+    return nullptr;
+}
+
+WebSocketServer::RequestData* WebSocketServer::getRequest(int connID)
+{
+    for (auto& req : m_requestQueue)
+    {
+        if (req.connID == connID)
+        {
+            return &req;
         }
     }
 

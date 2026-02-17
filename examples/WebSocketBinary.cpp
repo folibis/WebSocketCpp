@@ -23,10 +23,8 @@ int main(int argc, char* argv[])
 {
     signal(SIGINT, handle_sigint);
 
-    int              port_http     = DEFAULT_HTTP_PORT;
-    int              port_ws       = DEFAULT_WS_PORT;
-    WebSocketCpp::Protocol http_protocol = DEFAULT_HTTP_PROTOCOL;
-    WebSocketCpp::Protocol ws_protocol   = DEFAULT_WS_PROTOCOL;
+    int                    port_ws     = DEFAULT_WS_PORT;
+    WebSocketCpp::Protocol ws_protocol = DEFAULT_WS_PROTOCOL;
 
     auto cmdline = CommandLine::Parse(argc, argv);
 
@@ -53,8 +51,8 @@ int main(int argc, char* argv[])
         ws_protocol = WebSocketCpp::String2Protocol(s);
     }
 
-    int                     connID = (-1);
-    int                     min = 1, max = 100;
+    int                           connID = (-1);
+    int                           min = 1, max = 100;
     WebSocketCpp::WebSocketServer wsServer;
     wsServerPtr = &wsServer;
     WebSocketCpp::ThreadWorker task;
@@ -74,7 +72,6 @@ int main(int argc, char* argv[])
     });
 
     WebSocketCpp::Config& config = WebSocketCpp::Config::Instance();
-    config.SetRoot(PUB);
     config.SetWsProtocol(ws_protocol);
     config.SetWsServerPort(port_ws);
     config.SetSslSertificate(SSL_CERT);

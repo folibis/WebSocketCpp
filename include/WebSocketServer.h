@@ -20,7 +20,7 @@
 #ifndef WEB_SOCKET_CPP_WEBSOCKETSERVER_H
 #define WEB_SOCKET_CPP_WEBSOCKETSERVER_H
 
-#include <deque>
+#include <list>
 #include <memory>
 
 #include "CommunicationServerBase.h"
@@ -54,7 +54,13 @@ public:
     bool Close(bool wait = true) override;
     bool WaitFor() override;
 
-    void OnMessage(const std::string& path, const std::function<bool(const Request& request, ResponseWebSocket& response, const ByteArray& data)>& func);
+    using OnMessageCallback    = std::function<bool(const Request& request, ResponseWebSocket& response, const ByteArray& data)>;
+    using OnConnectCallback    = std::function<void(const Request&)>;
+    using OnDisconnectCallback = std::function<void(const Request&)>;
+
+    void OnMessage(const std::string& path, OnMessageCallback func);
+    void OnConnect(OnConnectCallback func);
+    void OnDisconnect(OnDisconnectCallback func);
 
     bool SendResponse(const ResponseWebSocket& response);
 
@@ -73,17 +79,22 @@ protected:
             request.GetHeader().SetRemote(remote);
         }
 
-        int                           connID;
+        int                           connID{-1};
         Request                       request;
-        ByteArray                     data;
+        ByteArray                     data{};
         std::vector<RequestWebSocket> requestList;
-        bool                          handshake;
-        bool                          readyForDispatch;
+        bool                          handshake{false};
+        bool                          readyForDispatch{false};
+
+        RequestData(const RequestData&)            = delete;
+        RequestData& operator=(const RequestData&) = delete;
+        RequestData(RequestData&&) noexcept        = delete;
+        RequestData& operator=(RequestData&&)      = delete;
     };
 
-    void OnConnected(int connID, const std::string& remote);
-    void OnDataReady(int connID, ByteArray data);
-    void OnClosed(int connID);
+    void ClientConnected(int connID, const std::string& remote);
+    void DataReady(int connID, ByteArray data);
+    void ClientDisconnected(int connID);
 
     bool  StartRequestThread();
     bool  StopRequestThread();
@@ -92,7 +103,7 @@ protected:
     void SendSignal();
     void WaitForSignal();
     void InitConnection(int connID, const std::string& remote);
-    void PutToQueue(int connID, ByteArray& data);
+    void PutToQueue(int connID, ByteArray&& data);
 
     bool            IsQueueEmpty();
     bool            CheckData();
@@ -103,18 +114,22 @@ protected:
     bool            CheckWsFrame(RequestData& requestData);
     bool            ProcessWsRequest(Request& request, const RequestWebSocket& wsRequest);
     RouteWebSocket* GetRoute(const std::string& path);
+    RequestData*    getRequest(int connID);
 
 private:
-    std::shared_ptr<CommunicationServerBase> m_server   = nullptr;
+    std::unique_ptr<CommunicationServerBase> m_server   = nullptr;
     Protocol                                 m_protocol = Protocol::Undefined;
     ThreadWorker                             m_requestThread;
     Mutex                                    m_queueMutex;
     Mutex                                    m_signalMutex;
     Mutex                                    m_requestMutex;
     Signal                                   m_signalCondition;
-    std::deque<RequestData>                  m_requestQueue;
+    std::list<RequestData>                   m_requestQueue;
     Config&                                  m_config;
     std::vector<RouteWebSocket>              m_routes;
+    Mutex                                    m_routeMutex;
+    OnConnectCallback                        m_connect_callback;
+    OnDisconnectCallback                     m_disconnect_callback;
 };
 
 } // namespace WebSocketCpp

@@ -30,13 +30,15 @@
 #include <map>
 #include <string>
 
+#include "IErrorable.h"
+
 #define DEFAULT_PORT         80
 #define DEFAULT_SECURED_PORT 443
 
 namespace WebSocketCpp
 {
 
-class Url
+class Url: public IErrorable
 {
 public:
     enum class Scheme

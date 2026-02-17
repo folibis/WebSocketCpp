@@ -79,7 +79,7 @@ protected:
 
     void*        ReadThread(bool& running);
     ThreadWorker m_readThread;
-    char         m_readBuffer[READ_BUFFER_SIZE];
+    char         m_readBuffer[READ_BUFFER_SIZE]{};
 
     std::function<void(int, const std::string&)> m_newConnectionCallback   = nullptr;
     std::function<void(int, ByteArray data)>     m_dataReadyCallback       = nullptr;

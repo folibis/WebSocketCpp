@@ -32,6 +32,7 @@
 #include <unistd.h>
 
 #include <csignal>
+#include <thread>
 
 #include "DebugPrint.h"
 #include "ResponseWebSocket.h"
@@ -40,16 +41,29 @@
 #include "common.h"
 #include "example_common.h"
 
-#define SEND_ATTEMPTS 10
-#define SEND_DELAY    1000 // ms.
+#define SEND_DELAY_MS 10 // ms.
+#define MAX_MESSAGES 1000 // ms.
+
+std::function<void()> stop_func;
+
+void handle_sigint(int)
+{
+    if (stop_func)
+    {
+        WebSocketCpp::DebugPrint() << "signal received, stopped ... " << std::endl;
+        stop_func();
+    }
+}
 
 int main(int argc, char* argv[])
 {
-    int              port_ws     = DEFAULT_WS_PORT;
+    int                    port_ws     = DEFAULT_WS_PORT;
     WebSocketCpp::Protocol ws_protocol = DEFAULT_WS_PROTOCOL;
 
-    std::string address = "ws://127.0.0.1:8081/ws";
+    std::string address = "ws://127.0.0.1:8080/ws";
     auto        cmdline = CommandLine::Parse(argc, argv);
+
+    signal(SIGINT, handle_sigint);
 
     if (cmdline.Exists("-h"))
     {
@@ -72,13 +86,18 @@ int main(int argc, char* argv[])
     }
 
     WebSocketCpp::Config& config = WebSocketCpp::Config::Instance();
-    config.SetRoot(PUB);
     config.SetWsProtocol(ws_protocol);
     config.SetWsServerPort(port_ws);
 
+    WebSocketCpp::DebugPrint::AllowPrint = true;
     WebSocketCpp::WebSocketClient wsClient;
     WebSocketCpp::ThreadWorker    task;
-    int                     counter = 0;
+    int                           counter = 0;
+
+    stop_func = [&task, &wsClient]() {
+        task.Stop();
+        wsClient.Close();
+    };
 
     wsClient.SetOnConnect([&wsClient, &task](bool connected) {
         WebSocketCpp::DebugPrint() << "connected: " << (connected ? "true" : "false") << std::endl;
@@ -87,21 +106,18 @@ int main(int argc, char* argv[])
 
     wsClient.SetOnClose([]() {
         WebSocketCpp::DebugPrint() << "closed" << std::endl;
+        stop_func();
     });
 
     wsClient.SetOnError([](const std::string& error) {
         WebSocketCpp::DebugPrint() << "error: " << error << std::endl;
+        stop_func();
     });
 
     wsClient.SetOnMessage([&](WebSocketCpp::ResponseWebSocket& response) {
-        WebSocketCpp::DebugPrint() << "message received: ";
-        std::cout << StringUtil::ByteArray2String(response.GetData()) << std::endl
-                  << std::endl;
-        if (counter >= SEND_ATTEMPTS)
-        {
-            task.Stop();
-            wsClient.Close();
-        }
+        WebSocketCpp::DebugPrint() << "message received: "
+                                   << StringUtil::ByteArray2String(response.GetData()) << std::endl
+                                   << std::endl;
     });
 
     if (wsClient.Init() == false)
@@ -124,9 +140,14 @@ int main(int argc, char* argv[])
             auto str = StringUtil::GenerateRandomString();
             WebSocketCpp::DebugPrint() << "message send:     " << str << std::endl;
             wsClient.SendText(str);
-            counter++;
 
-            usleep(SEND_DELAY * 1000);
+            counter++;
+            if(MAX_MESSAGES > 0 && counter >= MAX_MESSAGES)
+            {
+                running = false;
+                stop_func();
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(SEND_DELAY_MS));
         }
         return nullptr;
     });

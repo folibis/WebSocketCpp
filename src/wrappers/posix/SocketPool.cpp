@@ -670,7 +670,7 @@ bool SocketPool::HasData(size_t index) const
 bool SocketPool::IsPollError(size_t index) const
 {
     int16_t ev = m_fds[index].revents;
-    return ev == POLLERR || ev == POLLHUP || ev == POLLNVAL;
+    return ev & (POLLERR | POLLHUP | POLLNVAL);
 }
 
 void SocketPool::SetPort(int port)

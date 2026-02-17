@@ -6,10 +6,7 @@
 #include <map>
 #include <string>
 
-#define PUB PUBLIC_DIR
-#define DEFAULT_HTTP_PORT 8080
-#define DEFAULT_WS_PORT 8081
-#define DEFAULT_HTTP_PROTOCOL WebSocketCpp::Protocol::HTTP
+#define DEFAULT_WS_PORT 8080
 #define DEFAULT_WS_PROTOCOL WebSocketCpp::Protocol::WS
 #define SSL_CERT "~/.ssh/server.cert"
 #define SSL_KEY "~/.ssh/server.key"

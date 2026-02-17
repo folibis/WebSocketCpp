@@ -20,9 +20,6 @@
 #ifndef WEB_SOCKET_CPP_IERROR_H
 #define WEB_SOCKET_CPP_IERROR_H
 
-#define NO_ERROR 0
-#define ERROR    (-1)
-
 #include <string>
 
 namespace WebSocketCpp
@@ -31,6 +28,9 @@ namespace WebSocketCpp
 class IErrorable
 {
 public:
+    static const int NO_ERROR = 0;
+    static const int ERROR = (-1);
+
     inline std::string& GetLastError()
     {
         return m_lastError;

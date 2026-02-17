@@ -69,9 +69,9 @@ bool WebSocketClient::Open(Request& request)
     }
 
     auto& header = request.GetHeader();
-    header.SetHeader(HttpHeader::HeaderType::Host, request.GetUrl().GetHost());
-    header.SetHeader(HttpHeader::HeaderType::Upgrade, "websocket");
-    header.SetHeader(HttpHeader::HeaderType::Connection, "Upgrade");
+    header.SetHeader(Header::HeaderType::Host, request.GetUrl().GetHost());
+    header.SetHeader(Header::HeaderType::Upgrade, "websocket");
+    header.SetHeader(Header::HeaderType::Connection, "Upgrade");
     m_key = Data::Base64Encode(StringUtil::GenerateRandomString(16));
     header.SetHeader("Sec-WebSocket-Key", m_key);
     header.SetHeader("Sec-WebSocket-Version", WS_VERSION);
@@ -182,11 +182,11 @@ void WebSocketClient::OnDataReady(const ByteArray& data)
             if (response.GetResponseCode() == 101)
             {
                 auto&       header = response.GetHeader();
-                std::string h      = header.GetHeader(HttpHeader::HeaderType::Upgrade);
+                std::string h      = header.GetHeader(Header::HeaderType::Upgrade);
                 StringUtil::ToLower(h);
                 if (h == "websocket")
                 {
-                    h = header.GetHeader(HttpHeader::HeaderType::Connection);
+                    h = header.GetHeader(Header::HeaderType::Connection);
                     StringUtil::ToLower(h);
                     if (h == "upgrade")
                     {

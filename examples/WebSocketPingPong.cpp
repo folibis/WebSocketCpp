@@ -46,10 +46,8 @@ void handle_sigint(int)
 
 int main(int argc, char* argv[])
 {
-    int              port_http     = DEFAULT_HTTP_PORT;
-    int              port_ws       = DEFAULT_WS_PORT;
-    WebSocketCpp::Protocol http_protocol = DEFAULT_HTTP_PROTOCOL;
-    WebSocketCpp::Protocol ws_protocol   = DEFAULT_WS_PROTOCOL;
+    int                    port_ws     = DEFAULT_WS_PORT;
+    WebSocketCpp::Protocol ws_protocol = DEFAULT_WS_PROTOCOL;
 
     auto cmdline = CommandLine::Parse(argc, argv);
 
@@ -78,11 +76,11 @@ int main(int argc, char* argv[])
 
     signal(SIGINT, handle_sigint);
 
+    WebSocketCpp::DebugPrint::AllowPrint = true;
     WebSocketCpp::WebSocketServer wsServer;
     wsServerPtr = &wsServer;
 
     WebSocketCpp::Config& config = WebSocketCpp::Config::Instance();
-    config.SetRoot(PUB);
     config.SetWsProtocol(ws_protocol);
     config.SetWsServerPort(port_ws);
     config.SetSslSertificate(SSL_CERT);
@@ -92,8 +90,18 @@ int main(int argc, char* argv[])
     {
         WebSocketCpp::DebugPrint() << "WS server Init(): ok " << std::endl;
         wsServer.OnMessage("/ws", [&](const WebSocketCpp::Request& request, WebSocketCpp::ResponseWebSocket& response, const ByteArray& data) -> bool {
+            WebSocketCpp::DebugPrint() << "received: " << data << std::endl;
             response.WriteText(data);
             return true;
+        });
+
+        wsServer.OnConnect([](const WebSocketCpp::Request& request){
+            WebSocketCpp::DebugPrint() << "client connected: " << request.ToString() << std::endl;
+        });
+
+        wsServer.OnDisconnect([&wsServer](const WebSocketCpp::Request& request){
+            WebSocketCpp::DebugPrint() << "client disconnected: " << request.ToString() << std::endl;
+            wsServer.Close(false);
         });
 
         wsServer.Run();

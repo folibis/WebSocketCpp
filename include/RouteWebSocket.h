@@ -35,11 +35,12 @@ public:
     using RouteFuncMessage = std::function<bool(const Request& request, ResponseWebSocket& response, const ByteArray& data)>;
 
     RouteWebSocket(const std::string& path);
+    RouteWebSocket(const std::string& path, RouteFuncMessage message_func = nullptr, RouteFuncRequest request_func = nullptr);
 
-    bool                    SetFunctionRequest(const RouteFuncRequest& f);
+    bool                    SetFunctionRequest(RouteFuncRequest f);
     const RouteFuncRequest& GetFunctionRequest() const;
 
-    bool                    SetFunctionMessage(const RouteFuncMessage& f);
+    bool                    SetFunctionMessage(RouteFuncMessage f);
     const RouteFuncMessage& GetFunctionMessage() const;
 
 private:

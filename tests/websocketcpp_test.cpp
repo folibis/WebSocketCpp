@@ -43,7 +43,7 @@ std::vector<std::string> arr_client;
 std::mutex               mtx;
 std::condition_variable  cv;
 bool                     finished   = false;
-size_t                   test_count = 10;
+size_t                   test_count = 100;
 uint64_t                 delay_ms   = 10;
 
 std::string random_string(size_t min_length = 5, size_t max_length = 20)
@@ -87,11 +87,13 @@ bool ClientHandler(WebSocketCpp::ResponseWebSocket& response)
     return true;
 }
 
+// Open server and client simultaneously, exchange random data as ping-pong,
+// compute a hash of all sent data and verify it matches the received data.
 TEST(WebSocketCppTest, ClientServer)
 {
     WebSocketCpp::Config& config = WebSocketCpp::Config::Instance();
     config.SetWsProtocol(Protocol::WS);
-    config.SetWsServerPort(8081);
+    config.SetWsServerPort(8080);
 
     WebSocketCpp::WebSocketServer server;
     if (server.Init())
@@ -105,30 +107,34 @@ TEST(WebSocketCppTest, ClientServer)
             client.SetOnMessage(ClientHandler);
             if (client.Init())
             {
-                if (client.Open("ws://127.0.0.1:8081/ws"))
+                if (client.Open("ws://127.0.0.1:8080/ws"))
                 {
                     fut = std::async(std::launch::async, [&client]() -> size_t {
-                        size_t len = 0;
-                        for (size_t i = 0; i < 10; i++)
+                        size_t hash = 0;
+                        for (size_t i = 0; i < test_count; i++)
                         {
                             std::string s = random_string();
-                            len += s.length();
+                            hash |= _(s.c_str());
                             client.SendText(s);
                             std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
                         }
 
-                        return len;
+                        finished = true;
+                        cv.notify_all();
+
+                        return hash;
                     });
                 }
             }
 
             std::unique_lock<std::mutex> lock(mtx);
-            cv.wait_for(lock, std::chrono::milliseconds(delay_ms * test_count * 200000), []() { return finished; });
+            bool success = cv.wait_for(lock, std::chrono::milliseconds(delay_ms * test_count * 2), []() { return finished; });
+            EXPECT_TRUE(success);
 
             size_t total_len      = fut.get();
             size_t calculated_len = std::accumulate(
                 arr_server.begin(), arr_server.end(), size_t(0),
-                [](size_t sum, const std::string& s) { return sum + s.size(); });
+                [](size_t hash, const std::string& s) { return hash |= _(s.c_str()); });
 
             EXPECT_EQ(total_len, calculated_len);
             EXPECT_EQ(arr_server, arr_client);

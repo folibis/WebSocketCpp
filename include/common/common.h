@@ -41,8 +41,8 @@ std::string Method2String(Method method);
 #define CRLF     '\r', '\n'
 #define CRLFCRLF '\r', '\n', '\r', '\n'
 
-#define WEB_SOCKET_CPP_VERSION        "0.2"
-#define WEB_SOCKET_CPP_NAME           "WebCpp"
+#define WEB_SOCKET_CPP_VERSION        "0.3"
+#define WEB_SOCKET_CPP_NAME           "WebSocketCpp"
 #define WEB_SOCKET_CPP_CANONICAL_NAME WEB_SOCKET_CPP_NAME " " WEB_SOCKET_CPP_VERSION
 
 using ByteArray = std::vector<uint8_t>;

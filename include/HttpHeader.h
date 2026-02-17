@@ -23,6 +23,7 @@
 #include <string>
 #include <vector>
 
+#include "Header.h"
 #include "StringUtil.h"
 #include "common.h"
 
@@ -32,122 +33,21 @@ namespace WebSocketCpp
 class HttpHeader
 {
 public:
-    enum class HeaderRole
-    {
-        Undefined = 0,
-        Request,
-        Response,
-    };
+    explicit HttpHeader(Header::HeaderRole role);
+    HttpHeader(const HttpHeader& other)                = delete;
+    HttpHeader& operator=(const HttpHeader& other)     = delete;
+    HttpHeader(HttpHeader&& other) noexcept            = delete;
+    HttpHeader& operator=(HttpHeader&& other) noexcept = delete;
 
-    enum class HeaderType
-    {
-        Undefined = 0,
-        Accept,
-        AcceptCharset,
-        AcceptEncoding,
-        AcceptDatetime,
-        AcceptLanguage,
-        Authorization,
-        CacheControl,
-        Connection,
-        ContentEncoding,
-        ContentLength,
-        ContentMD5,
-        ContentType,
-        Cookie,
-        Date,
-        Expect,
-        Forwarded,
-        From,
-        Host,
-        HTTP2Settings,
-        IfMatch,
-        IfModifiedSince,
-        IfNoneMatch,
-        IfRange,
-        IfUnmodifiedSince,
-        MaxForwards,
-        Origin,
-        Pragma,
-        Prefer,
-        ProxyAuthorization,
-        Range,
-        Referer,
-        TE,
-        Trailer,
-        TransferEncoding,
-        UserAgent,
-        Upgrade,
-        Via,
-        Warning,
-
-        AcceptCH,
-        AccessControlAllowOrigin,
-        AccessControlAllowCredentials,
-        AccessControlExposeHeaders,
-        AccessControlMaxAge,
-        AccessControlAllowMethods,
-        AccessControlAllowHeaders,
-        AcceptPatch,
-        AcceptRanges,
-        Age,
-        Allow,
-        AltSvc,
-        ContentDisposition,
-        ContentLanguage,
-        ContentLocation,
-        ContentRange,
-        DeltaBase,
-        ETag,
-        Expires,
-        IM,
-        LastModified,
-        Link,
-        Location,
-        P3P,
-        PreferenceApplied,
-        ProxyAuthenticate,
-        PublicKeyPins,
-        RetryAfter,
-        Server,
-        SetCookie,
-        StrictTransportSecurity,
-        Tk,
-        Vary,
-        WWWAuthenticate,
-        XFrameOptions,
-    };
-
-    struct Header
-    {
-        Header() {}
-        Header(HttpHeader::HeaderType _type, const std::string& _name, const std::string& _value)
-        {
-            type = _type;
-            name = _name;
-            value = _value;
-        }
-        HttpHeader::HeaderType    type  = HttpHeader::HeaderType::Undefined;
-        std::string               name  = "";
-        std::string               value = "";
-        static HttpHeader::Header defaultHeader;
-    };
-
-    explicit HttpHeader(HeaderRole role);
-    HttpHeader(const HttpHeader& other)            = delete;
-    HttpHeader& operator=(const HttpHeader& other) = delete;
-    HttpHeader(HttpHeader&& other)                 = default;
-    HttpHeader& operator=(HttpHeader&& other)      = default;
-
-    bool       Parse(const ByteArray& data, size_t start = 0);
-    bool       ParseHeader(const ByteArray& data);
-    ByteArray  ToByteArray() const;
-    bool       IsComplete() const;
-    size_t     GetHeaderSize() const;
-    size_t     GetBodySize() const;
-    size_t     GetRequestSize() const;
-    void       SetChunckedSize(size_t size);
-    HeaderRole GetRole() const;
+    bool               Parse(const ByteArray& data, size_t start = 0);
+    bool               ParseHeader(const ByteArray& data);
+    ByteArray          ToByteArray() const;
+    bool               IsComplete() const;
+    size_t             GetHeaderSize() const;
+    size_t             GetBodySize() const;
+    size_t             GetRequestSize() const;
+    void               SetChunckedSize(size_t size);
+    Header::HeaderRole GetRole() const;
 
     void        SetVersion(const std::string& version);
     std::string GetVersion() const;
@@ -157,17 +57,14 @@ public:
     std::string GetRemoteAddress() const;
     int         GetRemotePort() const;
 
-    int                                    GetCount() const;
-    std::string                            GetHeader(HeaderType headerType) const;
-    std::string                            GetHeader(const std::string& headerType) const;
-    std::vector<std::string>               GetAllHeaders(const std::string& headerType) const;
-    const std::vector<HttpHeader::Header>& GetHeaders() const;
-    void                                   SetHeader(HeaderType type, const std::string& value);
-    void                                   SetHeader(const std::string& name, const std::string& value);
-    void                                   Clear();
-
-    static HttpHeader::HeaderType String2HeaderType(const std::string& str);
-    static std::string            HeaderType2String(HttpHeader::HeaderType headerType);
+    size_t                     GetCount() const;
+    std::string                GetHeader(Header::HeaderType headerType) const;
+    std::string                GetHeader(const std::string& headerType) const;
+    std::vector<std::string>   GetAllHeaders(const std::string& headerType) const;
+    const std::vector<Header>& GetHeaders() const;
+    void                       SetHeader(Header::HeaderType type, const std::string& value);
+    void                       SetHeader(const std::string& name, const std::string& value);
+    void                       Clear();
 
     std::string ToString() const;
 
@@ -175,14 +72,14 @@ protected:
     bool ParseHeaders(const ByteArray& data, const StringUtil::Ranges& ranges);
 
 private:
-    HeaderRole          m_role = HeaderRole::Undefined;
-    bool                m_complete   = false;
-    std::vector<Header> m_headers    = {};
-    std::string         m_version    = "HTTP/1.1";
-    size_t              m_headerSize = 0;
+    Header::HeaderRole  m_role{Header::HeaderRole::Undefined};
+    bool                m_complete{false};
+    std::vector<Header> m_headers{};
+    std::string         m_version{"HTTP/1.1"};
+    size_t              m_headerSize{};
     std::string         m_remoteAddress;
-    int                 m_remotePort  = (-1);
-    size_t              m_chunkedSize = 0;
+    int                 m_remotePort{-1};
+    size_t              m_chunkedSize{0};
 };
 
 } // namespace WebSocketCpp

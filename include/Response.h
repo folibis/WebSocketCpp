@@ -53,7 +53,7 @@ public:
     Response& operator=(Response&& other)      = delete;
 
     HttpHeader&       GetHeader();
-    void              AddHeader(HttpHeader::HeaderType header, const std::string& value);
+    void              AddHeader(Header::HeaderType header, const std::string& value);
     void              AddHeader(const std::string& name, const std::string& value);
     void              Write(const ByteArray& data, size_t start = 0);
     void              Write(const std::string& data);
@@ -101,7 +101,7 @@ protected:
     static EncodingType String2EncodingType(const std::string& str);
 
 private:
-    int           m_connID;
+    int           m_connID{-1};
     const Config& m_config;
     std::string   m_version;
     HttpHeader    m_header;

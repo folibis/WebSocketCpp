@@ -9,7 +9,9 @@
 using namespace WebSocketCpp;
 
 Response::Response(int connID, const Config& config)
-    : m_connID(connID), m_config(config), m_header(HttpHeader::HeaderRole::Response)
+    : m_connID(connID),
+      m_config(config),
+      m_header(Header::HeaderRole::Response)
 {
     InitDefault();
 }
@@ -24,15 +26,15 @@ void Response::AddHeader(const std::string& name, const std::string& value)
     m_header.SetHeader(name, value);
 }
 
-void Response::AddHeader(HttpHeader::HeaderType header, const std::string& value)
+void Response::AddHeader(Header::HeaderType header, const std::string& value)
 {
-    AddHeader(HttpHeader::HeaderType2String(header), value);
+    AddHeader(Header::HeaderType2String(header), value);
 }
 
 void Response::Write(const ByteArray& data, size_t start)
 {
     m_body.insert(m_body.end(), data.begin() + start, data.end());
-    AddHeader(HttpHeader::HeaderType::ContentLength, std::to_string(m_body.size()));
+    AddHeader(Header::HeaderType::ContentLength, std::to_string(m_body.size()));
 }
 
 void Response::Write(const std::string& data)
@@ -58,9 +60,9 @@ bool Response::AddFile(const std::string& file, const std::string& charset)
     if (FileSystem::IsFileExist(path))
     {
         std::string ext = FileSystem::ExtractFileExtension(path);
-        AddHeader(HttpHeader::HeaderType::ContentType, Response::Extension2MimeType(ext) + ";charset=" + charset);
-        AddHeader(HttpHeader::HeaderType::ContentLength, std::to_string(FileSystem::GetFileSize(path)));
-        AddHeader(HttpHeader::HeaderType::LastModified, FileSystem::GetFileModifiedTime(path));
+        AddHeader(Header::HeaderType::ContentType, Response::Extension2MimeType(ext) + ";charset=" + charset);
+        AddHeader(Header::HeaderType::ContentLength, std::to_string(FileSystem::GetFileSize(path)));
+        AddHeader(Header::HeaderType::LastModified, FileSystem::GetFileModifiedTime(path));
         m_file = path;
         retval = true;
     }
@@ -76,7 +78,7 @@ bool Response::NotFound()
 {
     m_responseCode   = 404;
     m_responsePhrase = Response::ResponseCode2String(m_responseCode);
-    AddHeader(HttpHeader::HeaderType::ContentLength, "0");
+    AddHeader(Header::HeaderType::ContentLength, "0");
     return true;
 }
 
@@ -84,8 +86,8 @@ bool Response::Redirect(const std::string& url)
 {
     m_responseCode   = 301;
     m_responsePhrase = Response::ResponseCode2String(m_responseCode);
-    AddHeader(HttpHeader::HeaderType::Location, url);
-    AddHeader(HttpHeader::HeaderType::ContentLength, "0");
+    AddHeader(Header::HeaderType::Location, url);
+    AddHeader(Header::HeaderType::ContentLength, "0");
     return true;
 }
 
@@ -93,7 +95,7 @@ bool Response::Unauthorized()
 {
     m_responseCode   = 401;
     m_responsePhrase = Response::ResponseCode2String(m_responseCode);
-    AddHeader(HttpHeader::HeaderType::ContentLength, "0");
+    AddHeader(Header::HeaderType::ContentLength, "0");
     return true;
 }
 
@@ -242,8 +244,8 @@ bool Response::Parse(const ByteArray& data, size_t* all, size_t* downoaded)
 
         if (data.size() >= allSize)
         {
-            auto transferEncoding = m_header.GetHeader(HttpHeader::HeaderType::TransferEncoding);
-            auto contentEncoding  = String2EncodingType(m_header.GetHeader(HttpHeader::HeaderType::ContentEncoding));
+            auto transferEncoding = m_header.GetHeader(Header::HeaderType::TransferEncoding);
+            auto contentEncoding  = String2EncodingType(m_header.GetHeader(Header::HeaderType::ContentEncoding));
 
             /* some servers send 'chunked' inside Content-Encoding but according to the
              * https://datatracker.ietf.org/doc/html/rfc2616#section-3.5 it's incorrect
@@ -660,7 +662,7 @@ void Response::InitDefault()
     m_version      = "HTTP/1.1";
     m_responseCode = 200;
     m_mimeType     = "text/plain";
-    AddHeader(HttpHeader::HeaderType::Server, m_config.GetServerName());
+    AddHeader(Header::HeaderType::Server, m_config.GetServerName());
 }
 
 ByteArray Response::BuildStatusLine() const

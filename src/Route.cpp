@@ -6,11 +6,11 @@
 using namespace WebSocketCpp;
 
 Route::Route(const std::string& path, Method method, bool useAuth)
+    : m_method(method),
+      m_path(path),
+      m_useAuth(useAuth)
 {
-    m_method = method;
     Parse(path);
-    m_path    = path;
-    m_useAuth = useAuth;
 }
 
 const std::string& Route::GetPath() const

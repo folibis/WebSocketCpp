@@ -23,8 +23,8 @@
 #include <map>
 #include <memory>
 
-#include "HttpHeader.h"
 #include "CommunicationClientBase.h"
+#include "HttpHeader.h"
 #include "IErrorable.h"
 #include "RequestBody.h"
 #include "Url.h"
@@ -38,11 +38,10 @@ class Request : public IErrorable
 {
 public:
     Request();
-    Request(int connID, const std::string& remote);
     Request(const Request& other)            = delete;
     Request& operator=(const Request& other) = delete;
-    Request(Request&& other)                 = default;
-    Request& operator=(Request&& other)      = default;
+    Request(Request&& other)                 = delete;
+    Request& operator=(Request&& other)      = delete;
 
     bool               Parse(const ByteArray& data);
     int                GetConnectionID() const;
@@ -72,7 +71,7 @@ public:
 
 protected:
     bool      ParseRequestLine(const ByteArray& data, size_t& pos);
-    bool      ParseBody(const ByteArray& data, size_t headerSize);
+    bool      ParseBody(const ByteArray& data, size_t bodyPosition);
     ByteArray BuildRequestLine() const;
     ByteArray BuildHeaders() const;
 
@@ -80,9 +79,9 @@ private:
     int                                m_connID{-1};
     Url                                m_url;
     HttpHeader                         m_header;
-    Method                             m_method            = Method::Undefined;
-    std::string                        m_httpVersion       = "HTTP/1.1";
-    size_t                             m_requestLineLength = 0;
+    Method                             m_method      = Method::Undefined;
+    std::string                        m_httpVersion = "HTTP/1.1";
+    size_t                             m_requestLineLength{};
     std::map<std::string, std::string> m_args;
     RequestBody                        m_requestBody{};
     std::string                        m_remote;

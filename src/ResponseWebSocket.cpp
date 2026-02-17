@@ -7,9 +7,9 @@
 
 using namespace WebSocketCpp;
 
-ResponseWebSocket::ResponseWebSocket(int connID)
+ResponseWebSocket::ResponseWebSocket(int connID):
+      m_connID(connID)
 {
-    m_connID = connID;
 }
 
 bool ResponseWebSocket::IsEmpty() const
@@ -68,7 +68,7 @@ bool ResponseWebSocket::Send(CommunicationServerBase* communication) const
 
         if (dataSize < 126)
         {
-            header.flags2.PayloadLen = m_data.size();
+            header.flags2.PayloadLen = static_cast<uint8_t>(m_data.size() & 0xFF);
         }
         else
         {

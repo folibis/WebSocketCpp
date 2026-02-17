@@ -12,6 +12,11 @@ class RequestWebSocket
 {
 public:
     RequestWebSocket();
+    RequestWebSocket(const RequestWebSocket&)                = delete;
+    RequestWebSocket& operator=(const RequestWebSocket&)     = delete;
+    RequestWebSocket(RequestWebSocket&&) noexcept            = default;
+    RequestWebSocket& operator=(RequestWebSocket&&) noexcept = default;
+
     bool             Parse(const ByteArray& data);
     bool             IsFinal() const;
     MessageType      GetType() const;

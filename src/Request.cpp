@@ -8,7 +8,7 @@
 using namespace WebSocketCpp;
 
 Request::Request()
-    : m_header(HttpHeader::HeaderRole::Request)
+    : m_header(Header::HeaderRole::Request)
 {
 }
 
@@ -70,12 +70,6 @@ bool Request::ParseRequestLine(const ByteArray& data, size_t& pos)
     return false;
 }
 
-Request::Request(int connID, const std::string& remote)
-    : m_connID(connID),
-      m_header(HttpHeader::HeaderRole::Request)
-{
-}
-
 int Request::GetConnectionID() const
 {
     return m_connID;
@@ -121,11 +115,11 @@ std::string Request::GetHttpVersion() const
     return m_httpVersion;
 }
 
-bool Request::ParseBody(const ByteArray& data, size_t headerSize)
+bool Request::ParseBody(const ByteArray& data, size_t bodyPosition)
 {
     auto config      = Config::Instance();
-    auto contentType = m_header.GetHeader(HttpHeader::HeaderType::ContentType);
-    if (m_requestBody.Parse(data, headerSize, ByteArray(contentType.begin(), contentType.end()), config.GetTempFile()) == false)
+    auto contentType = m_header.GetHeader(Header::HeaderType::ContentType);
+    if (m_requestBody.Parse(data, bodyPosition, ByteArray(contentType.begin(), contentType.end()), config.GetTempFile()) == false)
     {
         SetLastError("body parsing error: " + m_requestBody.GetLastError());
         return false;
@@ -151,7 +145,7 @@ void Request::SetArg(const std::string& name, const std::string& value)
 
 Protocol Request::GetProtocol() const
 {
-    if (m_header.GetHeader(HttpHeader::HeaderType::Upgrade) == "websocket")
+    if (StringUtil::Compare(m_header.GetHeader(Header::HeaderType::Upgrade), "websocket"))
     {
         return Protocol::WS;
     }
@@ -200,13 +194,13 @@ bool Request::Send(const std::shared_ptr<CommunicationClientBase>& communication
     auto& hd = GetHeader();
     if (body.size() > 0)
     {
-        hd.SetHeader(HttpHeader::HeaderType::ContentType, m_requestBody.BuildContentType());
-        hd.SetHeader(HttpHeader::HeaderType::ContentLength, std::to_string(body.size()));
+        hd.SetHeader(Header::HeaderType::ContentType, m_requestBody.BuildContentType());
+        hd.SetHeader(Header::HeaderType::ContentLength, std::to_string(body.size()));
     }
 
-    hd.SetHeader(HttpHeader::HeaderType::UserAgent, WEB_SOCKET_CPP_CANONICAL_NAME);
-    hd.SetHeader(HttpHeader::HeaderType::Host, m_url.GetHost());
-    hd.SetHeader(HttpHeader::HeaderType::Accept, "*/*");
+    hd.SetHeader(Header::HeaderType::UserAgent, WEB_SOCKET_CPP_CANONICAL_NAME);
+    hd.SetHeader(Header::HeaderType::Host, m_url.GetHost());
+    hd.SetHeader(Header::HeaderType::Accept, "*/*");
 
     std::string encoding = "";
 #ifdef WITH_ZLIB
@@ -214,7 +208,7 @@ bool Request::Send(const std::shared_ptr<CommunicationClientBase>& communication
 #endif
     if (!encoding.empty())
     {
-        hd.SetHeader(HttpHeader::HeaderType::AcceptEncoding, encoding);
+        hd.SetHeader(Header::HeaderType::AcceptEncoding, encoding);
     }
 
     const ByteArray& h = m_header.ToByteArray();
@@ -230,7 +224,7 @@ bool Request::Send(const std::shared_ptr<CommunicationClientBase>& communication
     }
     if (body.size() > 0)
     {
-        if (communication->Write(body))
+        if (communication->Write(body) == false)
         {
             SetLastError("error sending body: " + communication->GetLastError());
             return false;
@@ -242,14 +236,16 @@ bool Request::Send(const std::shared_ptr<CommunicationClientBase>& communication
 
 void Request::Clear()
 {
-    m_connID = (-1);
+    m_connID            = -1;
+    m_method            = Method::Undefined;
+    m_httpVersion       = "HTTP/1.1";
+    m_requestLineLength = 0;
+    m_remote            = "";
+    m_session           = nullptr;
     m_url.Clear();
     m_header.Clear();
-    m_requestLineLength = 0;
     m_args.clear();
     m_requestBody.Clear();
-    m_remote  = "";
-    m_session = nullptr;
 }
 
 void Request::SetSession(Session* session)
@@ -264,8 +260,9 @@ Session* Request::GetSession() const
 
 ByteArray Request::BuildRequestLine() const
 {
-    const HttpHeader& header = GetHeader();
-    std::string       line   = Method2String(m_method) + " " + m_url.GetNormalizedPath() + (m_url.HasQuery() ? ("?" + m_url.Query2String()) : "") + " " + m_httpVersion + CR + LF;
+
+    std::string line = Method2String(m_method) + " " + m_url.GetNormalizedPath() + (m_url.HasQuery() ? ("?" + m_url.Query2String()) : "") + " " + m_httpVersion + CR + LF;
+
     return StringUtil::String2ByteArray(line);
 }
 
@@ -276,7 +273,7 @@ ByteArray Request::BuildHeaders() const
     std::string headers;
     for (auto& entry : header.GetHeaders())
     {
-        headers += entry.name + ": " + entry.value + CR + LF;
+        headers += entry.getName() + ": " + entry.getValue() + CR + LF;
     }
 
     return ByteArray(headers.begin(), headers.end());
@@ -289,10 +286,6 @@ std::string Request::ToString() const
 
 std::string Request::GetArg(const std::string& name) const
 {
-    if (m_args.find(name) == m_args.end())
-    {
-        return "";
-    }
-
-    return m_args.at(name);
+    auto it = m_args.find(name);
+    return (it != m_args.end()) ? it->second : "";
 }

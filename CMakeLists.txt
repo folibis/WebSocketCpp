@@ -11,6 +11,8 @@ option(WEBSOCKETCPP_TESTS "Build with tests" ON)
 cmake_minimum_required(VERSION 3.11)
 set(CMAKE_CXX_STANDARD 11)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE BOOL "Enable output of compile commands" FORCE)
+
 project(websocketcpp)
 
 if(NOT DEFINED CMAKE_RUNTIME_OUTPUT_DIRECTORY)

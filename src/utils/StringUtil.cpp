@@ -8,6 +8,8 @@
 
 using namespace WebSocketCpp;
 
+std::mt19937 StringUtil::m_rng;
+
 size_t StringUtil::SearchPosition(const ByteArray& str, const ByteArray& substring, size_t start, size_t end)
 {
     if (str.size() <= 0 || substring.size() <= 0)
@@ -47,27 +49,41 @@ size_t StringUtil::SearchPosition(const ByteArray& str, const ByteArray& substri
 StringUtil::Ranges StringUtil::Split(const ByteArray& str, const ByteArray& delimiter, size_t start, size_t end)
 {
     Ranges retval;
-    size_t pos = SIZE_MAX;
+
+    if (str.empty() || delimiter.empty())
+    {
+        return retval;
+    }
+
     if (end == SIZE_MAX)
     {
         end = str.size() - 1;
     }
 
-    while ((pos = SearchPosition(str, delimiter, start, end)) != SIZE_MAX)
+    if (end < delimiter.size())
     {
-        size_t p1 = start;
-        size_t p2 = pos - 1;
-        retval.push_back(Range{p1, p2});
-
-        if (pos >= end - delimiter.size())
-        {
-            retval.push_back(Range{pos + delimiter.size(), end});
-            break;
-        }
-        start = pos + delimiter.size();
+        return retval;
     }
 
-    if (start < end)
+    size_t pos = SIZE_MAX;
+    while ((pos = SearchPosition(str, delimiter, start, end)) != SIZE_MAX)
+    {
+        retval.push_back(Range{start, pos - 1});
+
+        size_t next = pos + delimiter.size();
+        if (pos >= end - delimiter.size() + 1)
+        {
+            if (next <= end)
+            {
+                retval.push_back(Range{next, end});
+            }
+            return retval;
+        }
+
+        start = next;
+    }
+
+    if (start <= end)
     {
         retval.push_back(Range{start, end});
     }
@@ -249,6 +265,21 @@ bool StringUtil::String2int(const std::string& str, int& value, int base)
     }
 }
 
+bool StringUtil::String2uint64(const std::string& str, uint64_t& value)
+{
+    try {
+        size_t pos;
+        uint64_t result = std::stoull(str, &pos);
+        if (pos != str.size()) return false;
+        value = result;
+        return true;
+    }
+    catch (...) {
+        return false;
+    }
+}
+
+
 size_t StringUtil::FindOneOf(const std::string& str, const std::string& chars, char& ch, int pos)
 {
     int retval = (-1);
@@ -412,12 +443,13 @@ void StringUtil::Replace(std::string& str, const std::string& find, const std::s
 
 void StringUtil::RandInit()
 {
-    srand(static_cast<unsigned int>(time(nullptr)));
+    m_rng.seed(std::random_device{}());
 }
 
 uint32_t StringUtil::GetRand(uint32_t min, uint32_t max)
 {
-    return static_cast<uint32_t>(rand()) % (max - min) + min;
+    std::uniform_int_distribution<uint32_t> dist(min, max - 1);
+    return dist(m_rng);
 }
 
 bool StringUtil::Compare(const ByteArray& arr1, const ByteArray& arr2)
@@ -435,6 +467,20 @@ bool StringUtil::Compare(const ByteArray& arr1, const ByteArray& arr2)
         }
     }
 
+    return true;
+}
+
+bool StringUtil::Compare(const std::string& a, const std::string& b)
+{
+    if (a.size() != b.size())
+        return false;
+    for (size_t i = 0; i < a.size(); ++i)
+    {
+        if (std::tolower((unsigned char)a[i]) != std::tolower((unsigned char)b[i]))
+        {
+            return false;
+        }
+    }
     return true;
 }
 
