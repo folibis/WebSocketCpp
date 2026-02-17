@@ -42,7 +42,7 @@ std::vector<std::string> arr_server;
 std::vector<std::string> arr_client;
 std::mutex               mtx;
 std::condition_variable  cv;
-bool                     finished   = false;
+std::atomic<bool>        finished{false};
 size_t                   test_count = 100;
 uint64_t                 delay_ms   = 10;
 
@@ -52,7 +52,7 @@ std::string random_string(size_t min_length = 5, size_t max_length = 20)
 
     thread_local std::mt19937             rng{std::random_device{}()};
     std::uniform_int_distribution<size_t> length_dist(min_length, max_length);
-    std::uniform_int_distribution<size_t> char_dist(0, sizeof(chars) - 1);
+    std::uniform_int_distribution<size_t> char_dist(0, sizeof(chars) - 2);
 
     size_t      length = length_dist(rng);
     std::string result;
@@ -119,8 +119,8 @@ TEST(WebSocketCppTest, ClientServer)
                             std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
                         }
 
-                        finished = true;
-                        cv.notify_all();
+                        // finished = true;
+                        // cv.notify_all();
 
                         return hash;
                     });
@@ -128,7 +128,7 @@ TEST(WebSocketCppTest, ClientServer)
             }
 
             std::unique_lock<std::mutex> lock(mtx);
-            bool success = cv.wait_for(lock, std::chrono::milliseconds(delay_ms * test_count * 2), []() { return finished; });
+            bool                         success = cv.wait_for(lock, std::chrono::milliseconds(delay_ms * test_count * 2), []() { return finished.load(); });
             EXPECT_TRUE(success);
 
             size_t total_len      = fut.get();
