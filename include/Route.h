@@ -82,15 +82,15 @@ protected:
 
         void Clear()
         {
-            text = "";
-            type = Type::Default;
-            view = View::Default;
+            text     = "";
+            type     = Type::Default;
+            view     = View::Default;
             group.clear();
             group.shrink_to_fit();
         }
         bool IsEmpty()
         {
-            return (text.empty() && group.size() == 0);
+            return (type == Type::Default && text.empty() && group.size() == 0);
         }
         void SortGroup()
         {

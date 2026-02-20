@@ -1,7 +1,5 @@
 #include "Request.h"
 
-#include "Config.h"
-
 #define EOL_LENGTH             2
 #define ENTRY_DELIMITER_LENGTH 4
 
@@ -31,11 +29,6 @@ bool Request::Parse(const ByteArray& data)
             SetLastError("Request: error parsing header: " + GetLastError());
             return false;
         }
-    }
-
-    if (m_header.GetBodySize() > 0)
-    {
-        return ParseBody(data, m_requestLineLength + EOL_LENGTH + m_header.GetHeaderSize() + ENTRY_DELIMITER_LENGTH);
     }
 
     return true;
@@ -115,29 +108,6 @@ std::string Request::GetHttpVersion() const
     return m_httpVersion;
 }
 
-bool Request::ParseBody(const ByteArray& data, size_t bodyPosition)
-{
-    auto config      = Config::Instance();
-    auto contentType = m_header.GetHeader(Header::HeaderType::ContentType);
-    if (m_requestBody.Parse(data, bodyPosition, ByteArray(contentType.begin(), contentType.end()), config.GetTempFile()) == false)
-    {
-        SetLastError("body parsing error: " + m_requestBody.GetLastError());
-        return false;
-    }
-
-    return true;
-}
-
-const RequestBody& Request::GetRequestBody() const
-{
-    return m_requestBody;
-}
-
-RequestBody& Request::GetRequestBody()
-{
-    return m_requestBody;
-}
-
 void Request::SetArg(const std::string& name, const std::string& value)
 {
     m_args[name] = value;
@@ -186,18 +156,10 @@ bool Request::Send(const std::shared_ptr<CommunicationClientBase>& communication
 
     ByteArray header;
 
-    const ByteArray& body = m_requestBody.ToByteArray();
-
     const ByteArray& rl = BuildRequestLine();
     header.insert(header.end(), rl.begin(), rl.end());
 
     auto& hd = GetHeader();
-    if (body.size() > 0)
-    {
-        hd.SetHeader(Header::HeaderType::ContentType, m_requestBody.BuildContentType());
-        hd.SetHeader(Header::HeaderType::ContentLength, std::to_string(body.size()));
-    }
-
     hd.SetHeader(Header::HeaderType::UserAgent, WEB_SOCKET_CPP_CANONICAL_NAME);
     hd.SetHeader(Header::HeaderType::Host, m_url.GetHost());
     hd.SetHeader(Header::HeaderType::Accept, "*/*");
@@ -222,14 +184,6 @@ bool Request::Send(const std::shared_ptr<CommunicationClientBase>& communication
         SetLastError("error sending header: " + communication->GetLastError());
         return false;
     }
-    if (body.size() > 0)
-    {
-        if (communication->Write(body) == false)
-        {
-            SetLastError("error sending body: " + communication->GetLastError());
-            return false;
-        }
-    }
 
     return true;
 }
@@ -245,7 +199,6 @@ void Request::Clear()
     m_url.Clear();
     m_header.Clear();
     m_args.clear();
-    m_requestBody.Clear();
 }
 
 void Request::SetSession(Session* session)

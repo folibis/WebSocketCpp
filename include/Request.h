@@ -26,7 +26,6 @@
 #include "CommunicationClientBase.h"
 #include "HttpHeader.h"
 #include "IErrorable.h"
-#include "RequestBody.h"
 #include "Url.h"
 #include "common.h"
 
@@ -43,35 +42,32 @@ public:
     Request(Request&& other)                 = delete;
     Request& operator=(Request&& other)      = delete;
 
-    bool               Parse(const ByteArray& data);
-    int                GetConnectionID() const;
-    void               SetConnectionID(int connID);
-    const Url&         GetUrl() const;
-    Url&               GetUrl();
-    const HttpHeader&  GetHeader() const;
-    HttpHeader&        GetHeader();
-    Method             GetMethod() const;
-    void               SetMethod(Method method);
-    std::string        GetHttpVersion() const;
-    const RequestBody& GetRequestBody() const;
-    RequestBody&       GetRequestBody();
-    std::string        GetArg(const std::string& name) const;
-    void               SetArg(const std::string& name, const std::string& value);
-    bool               IsKeepAlive() const;
-    Protocol           GetProtocol() const;
-    size_t             GetRequestLineLength() const;
-    size_t             GetRequestSize() const;
-    std::string        GetRemote() const;
-    void               SetRemote(const std::string& remote);
-    bool               Send(const std::shared_ptr<CommunicationClientBase>& communication);
-    void               Clear();
-    void               SetSession(Session* session);
-    Session*           GetSession() const;
-    std::string        ToString() const;
+    bool              Parse(const ByteArray& data);
+    int               GetConnectionID() const;
+    void              SetConnectionID(int connID);
+    const Url&        GetUrl() const;
+    Url&              GetUrl();
+    const HttpHeader& GetHeader() const;
+    HttpHeader&       GetHeader();
+    Method            GetMethod() const;
+    void              SetMethod(Method method);
+    std::string       GetHttpVersion() const;
+    std::string       GetArg(const std::string& name) const;
+    void              SetArg(const std::string& name, const std::string& value);
+    bool              IsKeepAlive() const;
+    Protocol          GetProtocol() const;
+    size_t            GetRequestLineLength() const;
+    size_t            GetRequestSize() const;
+    std::string       GetRemote() const;
+    void              SetRemote(const std::string& remote);
+    bool              Send(const std::shared_ptr<CommunicationClientBase>& communication);
+    void              Clear();
+    void              SetSession(Session* session);
+    Session*          GetSession() const;
+    std::string       ToString() const;
 
 protected:
     bool      ParseRequestLine(const ByteArray& data, size_t& pos);
-    bool      ParseBody(const ByteArray& data, size_t bodyPosition);
     ByteArray BuildRequestLine() const;
     ByteArray BuildHeaders() const;
 
@@ -83,7 +79,6 @@ private:
     std::string                        m_httpVersion = "HTTP/1.1";
     size_t                             m_requestLineLength{};
     std::map<std::string, std::string> m_args;
-    RequestBody                        m_requestBody{};
     std::string                        m_remote;
     Session*                           m_session = nullptr;
 };
