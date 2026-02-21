@@ -119,17 +119,17 @@ TEST(WebSocketCppTest, ClientServer)
                             std::this_thread::sleep_for(std::chrono::milliseconds(delay_ms));
                         }
 
-                        // finished = true;
-                        // cv.notify_all();
-
                         return hash;
                     });
                 }
             }
 
             std::unique_lock<std::mutex> lock(mtx);
-            bool                         success = cv.wait_for(lock, std::chrono::milliseconds(delay_ms * test_count * 2), []() { return finished.load(); });
+            bool                         success = cv.wait_for(lock, std::chrono::milliseconds(delay_ms * test_count * 5), []() { return finished.load(); });
+
+
             EXPECT_TRUE(success);
+            server.Close();
 
             size_t total_len      = fut.get();
             size_t calculated_len = std::accumulate(

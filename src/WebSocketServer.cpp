@@ -20,6 +20,7 @@ WebSocketServer::WebSocketServer()
 
 WebSocketServer::~WebSocketServer()
 {
+    WebSocketServer::Close();
 }
 
 bool WebSocketServer::Init()
@@ -93,8 +94,13 @@ bool WebSocketServer::Run()
 
 bool WebSocketServer::Close(bool wait)
 {
-    m_server->Close(wait);
-    StopRequestThread();
+    if (m_running)
+    {
+        m_server->Close(wait);
+        StopRequestThread();
+        m_running = false;
+    }
+
     return true;
 }
 
