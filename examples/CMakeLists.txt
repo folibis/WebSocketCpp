@@ -27,3 +27,4 @@ target_link_libraries(WebSocketBinary PRIVATE websocketcpp)
 
 add_executable(WebSocketClient WebSocketClient.cpp)
 target_link_libraries(WebSocketClient PRIVATE websocketcpp)
+

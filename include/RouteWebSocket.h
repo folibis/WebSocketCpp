@@ -44,6 +44,8 @@ public:
     bool                    SetFunctionMessage(RouteFuncMessage f);
     const RouteFuncMessage& GetFunctionMessage() const;
 
+    std::string ToString() const;
+
 private:
     RouteFuncRequest m_funcRequest;
     RouteFuncMessage m_funcMessage;

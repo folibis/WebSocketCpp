@@ -34,13 +34,29 @@ public:
     virtual bool Close(bool wait = true) = 0;
     virtual bool WaitFor()               = 0;
 
-    virtual bool IsRunning()
+    inline virtual bool IsInitialized()
+    {
+        return m_initialized;
+    }
+
+    inline virtual void setInitialized(bool initialized)
+    {
+        m_initialized = initialized;
+    }
+
+    inline virtual bool IsRunning()
     {
         return m_running;
     }
 
-protected:
-    bool m_running = false;
+    inline virtual void setRunning(bool running)
+    {
+        m_running = running;
+    }
+
+private:
+    bool m_running     = false;
+    bool m_initialized = false;
 };
 
 } // namespace WebSocketCpp

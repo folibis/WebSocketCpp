@@ -29,13 +29,13 @@ CommunicationTcpClient::~CommunicationTcpClient()
 
 bool CommunicationTcpClient::Init()
 {
-    if(m_initialized == true)
+    if(IsInitialized() == true)
     {
         SetLastError("already initialized");
         return true;
     }
 
-    m_initialized = CommunicationClientBase::Init();
-    return m_initialized;
+    setInitialized(CommunicationClientBase::Init());
+    return IsInitialized();
 }
 

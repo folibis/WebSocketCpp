@@ -10,6 +10,7 @@
 #include "LogWriter.h"
 #include "common.h"
 #include "common_ws.h"
+#include "DebugPrint.h"
 
 using namespace WebSocketCpp;
 
@@ -73,32 +74,49 @@ bool WebSocketServer::Init()
         return false;
     }
 
+    setInitialized(true);
+
     return true;
 }
 
 bool WebSocketServer::Run()
 {
-    if (!m_server->Connect())
+    if (IsInitialized())
     {
+        if (IsRunning() == false)
+        {
+            if (!m_server->Connect())
+            {
+                SetLastError("websocket server init failed: " + m_server->GetLastError());
+                return false;
+            }
+
+            if (!m_server->Run())
+            {
+                SetLastError("websocket server run failed: " + m_server->GetLastError());
+                return false;
+            }
+
+            setRunning(true);
+        }
+    }
+    else
+    {
+        SetLastError("not initialized");
         return false;
     }
 
-    if (!m_server->Run())
-    {
-        return false;
-    }
 
-    m_running = true;
-    return m_running;
+    return IsRunning();
 }
 
 bool WebSocketServer::Close(bool wait)
 {
-    if (m_running)
+    if (IsRunning())
     {
         m_server->Close(wait);
         StopRequestThread();
-        m_running = false;
+        setRunning(false);
     }
 
     return true;
@@ -219,7 +237,10 @@ void* WebSocketServer::RequestThread(bool& running)
 {
     while (m_requestThread.IsRunning())
     {
-        WaitForSignal();
+        if(HasData() == false)
+        {
+            WaitForSignal();
+        }
         if (CheckData())
         {
             ProcessRequests();
@@ -378,6 +399,19 @@ void WebSocketServer::ProcessRequests()
     }
 }
 
+bool WebSocketServer::HasData()
+{
+    for (auto& entry : m_requestQueue)
+    {
+        if(!entry.data.empty() && entry.handshake == true)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 void WebSocketServer::RemoveFromQueue(int connID)
 {
     Lock lock(m_queueMutex);
@@ -486,6 +520,7 @@ bool WebSocketServer::ProcessWsRequest(Request& request, const RequestWebSocket&
             response.SetMessageType(MessageType::Pong);
             break;
         case MessageType::Close:
+
             break;
         default:
             break;

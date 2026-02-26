@@ -32,6 +32,13 @@ bool RouteWebSocket::SetFunctionMessage(RouteFuncMessage f)
     return true;
 }
 
+std::string RouteWebSocket::ToString() const
+{
+    return Route::ToString() +
+           ", request callback: " + (m_funcRequest ? "set" : "not set") +
+           ", message callback: " + (m_funcMessage ? "set" : "not set");
+}
+
 const RouteWebSocket::RouteFuncMessage& RouteWebSocket::GetFunctionMessage() const
 {
     return m_funcMessage;

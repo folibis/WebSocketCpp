@@ -55,6 +55,7 @@ bool CommunicationClientBase::Init()
             throw std::runtime_error(GetLastError());
         }
 
+        setInitialized(true);
         retval = true;
     }
 
@@ -72,24 +73,36 @@ bool CommunicationClientBase::Connect(const std::string& host, int port)
 {
     ClearError();
 
-    try
+    if (IsInitialized())
     {
-        if (m_socket.Connect(host, port) == false)
+        if (IsConnected() == false)
         {
-            SetLastError(std::string("socket connect error: ") + m_socket.GetLastError());
-            throw std::runtime_error(GetLastError());
-        }
+            try
+            {
+                if (m_socket.Connect(host, port) == false)
+                {
+                    SetLastError(std::string("socket connect error: ") + m_socket.GetLastError());
+                    throw std::runtime_error(GetLastError());
+                }
 
-        m_connected = true;
-        return m_connected;
+                setConnected(true);
+                return IsConnected();
+            }
+            catch (...)
+            {
+                setConnected(false);
+                CloseConnection();
+                DebugPrint() << "CommunicationClientBase::Connect error: " << GetLastError() << std::endl;
+                return false;
+            }
+        }
     }
-    catch (...)
+    else
     {
-        m_connected = false;
-        CloseConnection();
-        DebugPrint() << "CommunicationClientBase::Connect error: " << GetLastError() << std::endl;
-        return false;
+        SetLastError("not initialized");
     }
+
+    return IsConnected();
 }
 
 bool CommunicationClientBase::CloseConnection()
@@ -103,8 +116,8 @@ bool CommunicationClientBase::CloseConnection()
             m_closeConnectionCallback();
         }
     }
-    m_connected   = false;
-    m_initialized = false;
+    setConnected(false);
+    setInitialized(false);
 
     return retval;
 }
@@ -113,30 +126,30 @@ bool CommunicationClientBase::Run()
 {
     ClearError();
 
-    if (m_initialized)
+    if (IsInitialized())
     {
         auto f = std::bind(&CommunicationClientBase::ReadThread, this, std::placeholders::_1);
         m_thread.SetFunction(f);
-        m_running = m_thread.Start();
-        if (m_running == false)
+        setRunning(m_thread.Start());
+        if (IsRunning() == false)
         {
             SetLastError(m_thread.GetLastError());
         }
     }
 
-    return m_running;
+    return IsRunning();
 }
 
 bool CommunicationClientBase::Close(bool wait)
 {
-    if (m_initialized && m_connected)
+    if (IsInitialized() && IsConnected())
     {
         CloseConnection();
     }
 
-    if (m_running)
+    if (IsRunning())
     {
-        m_running = false;
+        setRunning(false);
         m_thread.Stop(wait);
     }
 
@@ -145,7 +158,7 @@ bool CommunicationClientBase::Close(bool wait)
 
 bool CommunicationClientBase::WaitFor()
 {
-    if (m_running)
+    if (IsRunning())
     {
         m_thread.Wait();
     }
@@ -157,7 +170,7 @@ bool CommunicationClientBase::Write(const ByteArray& data)
     ClearError();
     bool retval = false;
 
-    if (m_initialized == false || m_connected == false)
+    if (IsInitialized() == false || IsConnected() == false)
     {
         SetLastError("not initialized ot not connected");
         return false;

@@ -24,12 +24,15 @@
 #include <iomanip>
 #include <iostream>
 #include <vector>
+#include "Lock.h"
+#include "Mutex.h"
 
 namespace WebSocketCpp
 {
 
 class DebugPrint
 {
+    Mutex m_mutex;
 public:
     DebugPrint();
 
@@ -38,6 +41,7 @@ public:
     {
         if (DebugPrint::AllowPrint)
         {
+            Lock clock(m_mutex);
             std::cout << t;
         }
 
@@ -56,6 +60,7 @@ public:
                 if (i < vec.size() - 1)
                     std::cout << ", ";
             }
+            Lock clock(m_mutex);
             std::cout << "]";
         }
         return *this;

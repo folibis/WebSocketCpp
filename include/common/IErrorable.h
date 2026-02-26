@@ -29,7 +29,7 @@ class IErrorable
 {
 public:
     static const int NO_ERROR = 0;
-    static const int ERROR = (-1);
+    static const int ERROR    = (-1);
 
     inline std::string& GetLastError()
     {

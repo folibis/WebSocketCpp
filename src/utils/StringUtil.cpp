@@ -267,18 +267,20 @@ bool StringUtil::String2int(const std::string& str, int& value, int base)
 
 bool StringUtil::String2uint64(const std::string& str, uint64_t& value)
 {
-    try {
-        size_t pos;
+    try
+    {
+        size_t   pos;
         uint64_t result = std::stoull(str, &pos);
-        if (pos != str.size()) return false;
+        if (pos != str.size())
+            return false;
         value = result;
         return true;
     }
-    catch (...) {
+    catch (...)
+    {
         return false;
     }
 }
-
 
 size_t StringUtil::FindOneOf(const std::string& str, const std::string& chars, char& ch, int pos)
 {
@@ -385,43 +387,48 @@ std::string StringUtil::Int2Hex(int number, size_t len, const std::string& prefi
     return (prefix + retval);
 }
 
-void StringUtil::PrintHex(const ByteArray& array)
+std::string StringUtil::PrintHex(const ByteArray& array)
 {
 #ifndef NDEBUG
+    std::ostringstream oss;
+
     size_t pos  = 0;
     size_t size = array.size();
 
     while (pos < size)
     {
-        std::string txt = "";
-        std::cout << std::hex << std::setfill('0') << std::setw(6) << pos << " ";
-        for (size_t i = 0; i < 16; i++)
+        std::string txt;
+        oss << std::hex << std::setfill('0') << std::setw(6) << pos << " ";
+
+        for (size_t i = 0; i < 16; ++i)
         {
             if (pos + i < size)
             {
                 uint8_t ch = array[pos + i];
 
                 if (ch >= 32 && ch <= 126)
-                {
                     txt += static_cast<char>(ch);
-                }
                 else
-                {
-                    txt += ".";
-                }
-                std::cout << std::hex << std::setfill('0') << std::setw(2) << static_cast<int>(ch) << " ";
+                    txt += '.';
+
+                oss << std::hex << std::setfill('0')
+                    << std::setw(2) << static_cast<int>(ch) << " ";
             }
             else
             {
-                std::cout << "   ";
+                oss << "   ";
             }
         }
-        std::cout << "| " << txt << std::endl;
+
+        oss << "| " << txt << '\n';
         pos += 16;
     }
-    std::cout << std::dec;
+
+    oss << std::dec;
+    return oss.str();
+
 #else
-    std::cout << StringUtil::ByteArray2String(array) << std::endl;
+    return StringUtil::ByteArray2String(array);
 #endif
 }
 

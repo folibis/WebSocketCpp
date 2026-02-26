@@ -32,26 +32,26 @@ CommunicationTcpServer::~CommunicationTcpServer()
 
 bool CommunicationTcpServer::Init()
 {
-    if (m_initialized == true)
+    if (IsInitialized() == true)
     {
         SetLastError("already initialized");
         return false;
     }
 
-    m_initialized = CommunicationServerBase::Init();
-    return m_initialized;
+    setInitialized(CommunicationServerBase::Init());
+    return IsInitialized();
 }
 
 bool CommunicationTcpServer::Connect(const std::string& address, int port)
 {
     ClearError();
 
-    if (m_initialized == false)
+    if (IsInitialized() == false)
     {
         SetLastError("not initialized");
         return false;
     }
 
-    m_connected = CommunicationServerBase::Connect(address, port);
-    return m_connected;
+    setConnected(CommunicationServerBase::Connect(address, port));
+    return IsConnected();
 }

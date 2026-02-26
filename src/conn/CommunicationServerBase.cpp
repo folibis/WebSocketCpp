@@ -55,6 +55,7 @@ bool CommunicationServerBase::Init()
             throw std::runtime_error(GetLastError());
         }
 
+        setInitialized(true);
         retval = true;
     }
 
@@ -76,18 +77,18 @@ bool CommunicationServerBase::Run()
     {
         auto f = std::bind(&CommunicationServerBase::ReadThread, this, std::placeholders::_1);
         m_readThread.SetFunction(f);
-        m_running = m_readThread.Start();
-        if (m_running == false)
+        setRunning(m_readThread.Start());
+        if (IsRunning() == false)
         {
             SetLastError(m_readThread.GetLastError());
         }
     }
     catch (...)
     {
-        m_running = false;
+        setRunning(false);
     }
 
-    return m_running;
+    return IsRunning();
 }
 
 bool CommunicationServerBase::WaitFor()
@@ -127,10 +128,10 @@ bool CommunicationServerBase::Connect(const std::string& host, int port)
 
 bool CommunicationServerBase::Close(bool wait)
 {
-    if (m_running == true)
+    if (IsRunning() == true)
     {
         m_readThread.Stop(false);
-        m_running = false;
+        setRunning(false);
 
         CloseConnections();
     }
@@ -166,7 +167,7 @@ bool CommunicationServerBase::Write(int connID, ByteArray& data, size_t size)
 {
     ClearError();
 
-    if (m_initialized == false || m_connected == false)
+    if (IsInitialized() == false || IsConnected() == false)
     {
         SetLastError("not initialized or not connected");
         return false;

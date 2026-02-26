@@ -32,33 +32,37 @@ class ICommunication : public IErrorable, public IRunnable
 {
 public:
     virtual bool Connect(const std::string& host = "", int port = 0) = 0;
-    virtual void SetPort(int)
+
+    inline virtual void SetPort(int)
     {
     }
-    virtual int GetPort() const
+
+    inline virtual int GetPort() const
     {
         return 0;
     }
-    virtual void SetHost(const std::string&)
+
+    inline virtual void SetHost(const std::string&)
     {
     }
-    virtual std::string GetHost() const
+
+    inline virtual std::string GetHost() const
     {
         return std::string();
     }
 
-    bool IsInitialized() const
+    inline void setConnected(bool connected)
     {
-        return m_initialized;
+        m_connected = connected;
     }
-    bool IsConnected() const
+
+    inline bool IsConnected() const
     {
         return m_connected;
     }
 
-protected:
-    bool m_initialized = false;
-    bool m_connected   = false;
+private:
+    bool m_connected = false;
 };
 
 } // namespace WebSocketCpp

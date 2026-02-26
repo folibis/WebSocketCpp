@@ -109,6 +109,7 @@ protected:
     bool            IsQueueEmpty();
     bool            CheckData();
     void            ProcessRequests();
+    bool            HasData();
     void            RemoveFromQueue(int connID);
     bool            ProcessRequest(Request& request);
     bool            CheckWsHeader(RequestData& requestData);
