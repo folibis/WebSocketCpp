@@ -4,8 +4,6 @@
 
 small and lightweight WebSocket C++11 library
 
-*Note: the code in the midst of development, use it at your own risk*
-
 Currently supported:
 - Routing (no std::regex using) 
 - Pre/post routing handlers
@@ -14,7 +12,7 @@ Currently supported:
 - WebSocket server (both ws and wss)
 - WebSocket client
 
-Requirements:
+Requirements/dependencies:
 - Linux (Windows support coming soon)
 - Gcc >= 4.8.3
 - CMake
@@ -47,7 +45,6 @@ wsServer.Run();
 wsServer.WaitFor();
 
 // now you can connect to the WebSocket server using ws://127.0.0.1:8081/ws or ws://127.0.0.1:8081/ws/john
-// (or use included test page: examples/public/WebSocketServer.html)
 ```
 
 #### WebSocket client ####
