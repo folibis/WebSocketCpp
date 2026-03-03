@@ -129,8 +129,32 @@ config.SetSslSertificate("~/.ssh/server.cert");
 config.SetSslKey("~/.ssh/server.key");
 ```
 
+**Embedding the library**
 
+Embedding this library into your application is quite simple.
+You can either use `FetchContent` or download it manually:
+```
+include(FetchContent)
 
+FetchContent_Declare(
+    websocketcpp
+    GIT_REPOSITORY https://github.com/folibis/WebSocketCpp
+    GIT_TAG        master  # or a specific tag/commit
+)
 
+FetchContent_MakeAvailable(websocketcpp)
+
+target_link_libraries(your_target PRIVATE websocketcpp)
+```
+or 
+```
+# Disable unnecessary tests/examples and build the library statically
+set(WEBSOCKETCPP_STATIC_LIB ON CACHE BOOL "" FORCE)
+set(WEBSOCKETCPP_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(WEBSOCKETCPP_TESTS OFF CACHE BOOL "" FORCE)
+
+add_subdirectory(third_party/WebSocketCpp)
+target_link_libraries(your_target PRIVATE websocketcpp)
+```
 
 
