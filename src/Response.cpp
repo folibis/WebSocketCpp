@@ -218,6 +218,16 @@ bool Response::Parse(const ByteArray& data, size_t* all, size_t* downoaded)
     ClearError();
     size_t pos;
 
+    // check the header is completed
+    pos = StringUtil::SearchPosition(data, {CRLFCRLF});
+    if (pos == SIZE_MAX)
+    {
+        SetLastError("header is incomplete");
+        return false;
+    }
+
+    m_response_size = pos + 4;
+
     if (ParseStatusLine(data, pos) == false)
     {
         SetLastError("error parsing status line: " + GetLastError());
@@ -349,6 +359,11 @@ bool Response::DecodeBody(EncodingType type, const ByteArray& data, size_t pos)
     }
 
     return true;
+}
+
+size_t Response::GetResponseSize() const
+{
+    return m_response_size;
 }
 
 Response::EncodingType Response::String2EncodingType(const std::string& str)

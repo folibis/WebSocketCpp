@@ -80,7 +80,9 @@ private:
     PROPERTY(size_t, MaxBodyFileSize, 20_Mb)
     PROPERTY(size_t, MaxMessageSize, 10_Mb)
     PROPERTY(size_t, MaxFrameSize, 1_Mb)
-    PROPERTY(size_t, MaxConnectionMemor, 20_Mb)
+    PROPERTY(size_t, MaxConnectionMemory, 20_Mb)
+    PROPERTY(size_t, MaxClientCount, 2)
+    PROPERTY(uint64_t, ClientConnectTimeoutMs, 1000)
 };
 
 } // namespace WebSocketCpp

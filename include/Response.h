@@ -25,9 +25,9 @@
 
 #include <string>
 
+#include "CommunicationServerBase.h"
 #include "Config.h"
 #include "HttpHeader.h"
-#include "CommunicationServerBase.h"
 #include "IErrorable.h"
 #include "common.h"
 
@@ -66,6 +66,7 @@ public:
     const ByteArray&  GetBody() const;
     const HttpHeader& GetHeader() const;
     std::string       GetHttpVersion() const;
+    size_t            GetResponseSize() const;
 
     bool IsShouldSend() const;
     void SetShouldSend(bool value);
@@ -110,6 +111,7 @@ private:
     std::string   m_file;
     bool          m_shouldSend = true;
     Session*      m_session    = nullptr;
+    size_t        m_response_size{};
 };
 
 } // namespace WebSocketCpp

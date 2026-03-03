@@ -23,8 +23,10 @@
 #ifndef WEB_SOCKET_CPP_SIGNAL_H
 #define WEB_SOCKET_CPP_SIGNAL_H
 
-#include "Mutex.h"
+#include <cstdint>
 #include "pthread.h"
+
+#include "Mutex.h"
 
 namespace WebSocketCpp
 {
@@ -35,6 +37,7 @@ public:
     Signal();
     void Fire();
     void Wait(Mutex& mutex);
+    bool WaitTimeout(Mutex& mutex, uint64_t ms);
 
 private:
     pthread_cond_t m_signalCondition = PTHREAD_COND_INITIALIZER;

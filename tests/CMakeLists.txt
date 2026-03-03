@@ -26,3 +26,6 @@ add_executable(WebSocketCppRouteTest websocketcpp_route_test.cpp)
 add_test(NAME WebSocketCppRouteTest COMMAND WebSocketCppRouteTest)
 target_link_libraries(WebSocketCppRouteTest PRIVATE websocketcpp gtest_main)
 
+add_executable(WebSocketCppThreadPoolTest websocketcpp_thread_pool_test.cpp)
+add_test(NAME WebSocketCppThreadPoolTest COMMAND WebSocketCppThreadPoolTest)
+target_link_libraries(WebSocketCppThreadPoolTest PRIVATE websocketcpp gtest_main)

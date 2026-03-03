@@ -31,7 +31,7 @@ namespace WebSocketCpp
 class CommunicationTcpServer : public CommunicationServerBase
 {
 public:
-    CommunicationTcpServer() noexcept;
+    CommunicationTcpServer(size_t max_client_count = 2) noexcept;
     virtual ~CommunicationTcpServer();
 
     bool Init() override final;

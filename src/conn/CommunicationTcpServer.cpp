@@ -16,8 +16,10 @@
 
 using namespace WebSocketCpp;
 
-CommunicationTcpServer::CommunicationTcpServer() noexcept
-    : CommunicationServerBase(SocketPool::Domain::Inet,
+CommunicationTcpServer::CommunicationTcpServer(size_t max_client_count) noexcept
+    : CommunicationServerBase(
+          max_client_count,
+          SocketPool::Domain::Inet,
           SocketPool::Type::Stream,
           SocketPool::Options::ReuseAddr)
 {

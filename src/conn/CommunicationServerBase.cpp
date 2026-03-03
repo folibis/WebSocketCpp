@@ -10,15 +10,20 @@
 #include <cstring>
 #include <stdexcept>
 
-#include "DebugPrint.h"
 #include "Lock.h"
+#include "LogWriter.h"
 
 using namespace WebSocketCpp;
 
-CommunicationServerBase::CommunicationServerBase(SocketPool::Domain domain,
-    SocketPool::Type                                          type,
-    SocketPool::Options                                       options)
-    : m_sockets(MAX_CLIENTS + 1, SocketPool::Service::Server, domain, type, options)
+CommunicationServerBase::CommunicationServerBase(
+    size_t              max_client_count,
+    SocketPool::Domain  domain,
+    SocketPool::Type    type,
+    SocketPool::Options options)
+    : m_sockets(max_client_count + 1, SocketPool::Service::Server, domain, type, options),
+      m_readBuffer(max_client_count, ByteArray(READ_BUFFER_SIZE)),
+      m_processThreadPool(max_client_count),
+      m_connectedThreadPool(max_client_count)
 {
 }
 
@@ -55,6 +60,14 @@ bool CommunicationServerBase::Init()
             throw std::runtime_error(GetLastError());
         }
 
+        m_processThreadPool.Init([this](int clientID, const uint8_t* data, size_t size) {
+            processTask(clientID, data, size);
+        });
+
+        m_connectedThreadPool.Init([this](int clientID) {
+            connectedTask(clientID);
+        });
+
         setInitialized(true);
         retval = true;
     }
@@ -62,7 +75,7 @@ bool CommunicationServerBase::Init()
     catch (...)
     {
         CloseConnection(0);
-        DebugPrint() << "CommunicationServer::Init error: " << GetLastError() << std::endl;
+        LOG("CommunicationServer::Init error: " + GetLastError(), LogWriter::LogType::Error);
         retval = false;
     }
 
@@ -78,6 +91,8 @@ bool CommunicationServerBase::Run()
         auto f = std::bind(&CommunicationServerBase::ReadThread, this, std::placeholders::_1);
         m_readThread.SetFunction(f);
         setRunning(m_readThread.Start());
+        m_connectedThreadPool.Run();
+        m_processThreadPool.Run();
         if (IsRunning() == false)
         {
             SetLastError(m_readThread.GetLastError());
@@ -121,7 +136,7 @@ bool CommunicationServerBase::Connect(const std::string& host, int port)
     catch (...)
     {
         CloseConnection(0);
-        DebugPrint() << "CommunicationServer::Connect error: " << GetLastError() << std::endl;
+        LOG("CommunicationServer::Connect error: " + GetLastError(), LogWriter::LogType::Error);
         return false;
     }
 }
@@ -130,8 +145,12 @@ bool CommunicationServerBase::Close(bool wait)
 {
     if (IsRunning() == true)
     {
-        m_readThread.Stop(false);
+        m_readThread.Stop(true);
         setRunning(false);
+        setInitialized(false);
+
+        m_connectedThreadPool.Stop();
+        m_processThreadPool.Stop();
 
         CloseConnections();
     }
@@ -220,18 +239,22 @@ void* CommunicationServerBase::ReadThread(bool& running)
                             {
                                 if (m_newConnectionCallback != nullptr)
                                 {
-                                    m_newConnectionCallback(id, m_sockets.GetRemoteAddress(id));
+                                    m_connectedThreadPool.Submit(id);
                                 }
+                            }
+                            else
+                            {
+                                LOG("socket #" + std::to_string(i) + " accept error: " + m_sockets.GetLastError(), LogWriter::LogType::Error);
                             }
                         }
                         else // existing socket data received
                         {
-                            auto readBytes = m_sockets.Read(m_readBuffer, READ_BUFFER_SIZE, i);
+                            auto readBytes = m_sockets.Read(m_readBuffer[i - 1].data(), READ_BUFFER_SIZE, i);
                             if (readBytes != ERROR)
                             {
                                 if (m_dataReadyCallback != nullptr)
                                 {
-                                    m_dataReadyCallback(i, ByteArray(m_readBuffer, m_readBuffer + readBytes));
+                                    m_processThreadPool.Submit(i, m_readBuffer[i - 1].data(), readBytes);
                                 }
                             }
                             else
@@ -246,8 +269,18 @@ void* CommunicationServerBase::ReadThread(bool& running)
     }
     catch (...)
     {
-        DebugPrint() << "critical unexpected error occured in the read thread" << std::endl;
+        LOG("critical unexpected error occured in the read thread", LogWriter::LogType::Error);
     }
 
     return nullptr;
+}
+
+void CommunicationServerBase::connectedTask(int clientID)
+{
+    m_newConnectionCallback(clientID, m_sockets.GetRemoteAddress(clientID));
+}
+
+void CommunicationServerBase::processTask(int clientID, const uint8_t* data, size_t size)
+{
+    m_dataReadyCallback(clientID, ByteArray(data, data + size));
 }

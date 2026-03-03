@@ -38,10 +38,11 @@ public:
     using ThreadRoutine       = void*(bool&);
     using ThreadFinishRoutine = void(void*);
     ThreadWorker();
+    ~ThreadWorker();
     void SetFunction(const std::function<ThreadRoutine>& func);
     void SetFinishFunction(const std::function<ThreadFinishRoutine>& func);
     bool Start();
-    void Stop(bool wait = false);
+    void Stop(bool wait = true);
     void StopNoWait();
     void Wait() const;
     bool IsRunning() const

@@ -21,10 +21,12 @@
 #define WEB_SOCKET_CPP_ICOMMUNICATION_SERVER_H
 
 #include <functional>
+#include <memory>
 
 #include "ICommunication.h"
 #include "Mutex.h"
 #include "SocketPool.h"
+#include "ThreadPool.h"
 #include "ThreadWorker.h"
 #include "common.h"
 
@@ -38,9 +40,11 @@ namespace WebSocketCpp
 class CommunicationServerBase : public ICommunication
 {
 public:
-    CommunicationServerBase(SocketPool::Domain domain,
-        SocketPool::Type                       type,
-        SocketPool::Options                    options);
+    CommunicationServerBase(
+        size_t              max_client_count,
+        SocketPool::Domain  domain,
+        SocketPool::Type    type,
+        SocketPool::Options options);
 
     void        SetPort(int port) override;
     int         GetPort() const override;
@@ -73,14 +77,17 @@ public:
     };
 
 protected:
-    virtual void CloseConnections();
-    SocketPool   m_sockets;
-    Mutex        m_writeMutex;
+    virtual void                            CloseConnections();
+    SocketPool                              m_sockets;
+    Mutex                                   m_writeMutex;
+    void*                                   ReadThread(bool& running);
+    ThreadWorker                            m_readThread;
+    std::vector<ByteArray>                  m_readBuffer;
+    ThreadPool<int>                         m_connectedThreadPool;
+    ThreadPool<int, const uint8_t*, size_t> m_processThreadPool;
 
-    void*        ReadThread(bool& running);
-    ThreadWorker m_readThread;
-    char         m_readBuffer[READ_BUFFER_SIZE]{};
-
+    void                                         connectedTask(int clientID);
+    void                                         processTask(int clientID, const uint8_t* data, size_t size);
     std::function<void(int, const std::string&)> m_newConnectionCallback   = nullptr;
     std::function<void(int, ByteArray data)>     m_dataReadyCallback       = nullptr;
     std::function<void(int)>                     m_closeConnectionCallback = nullptr;

@@ -10,7 +10,6 @@
 #include "LogWriter.h"
 #include "common.h"
 #include "common_ws.h"
-#include "DebugPrint.h"
 
 using namespace WebSocketCpp;
 
@@ -32,7 +31,7 @@ bool WebSocketServer::Init()
     switch (m_protocol)
     {
         case Protocol::WS:
-            m_server = std::unique_ptr<CommunicationServerBase>(new CommunicationTcpServer);
+            m_server = std::unique_ptr<CommunicationServerBase>(new CommunicationTcpServer(m_config.GetMaxClientCount()));
             break;
 #ifdef WITH_OPENSSL
         case Protocol::WSS:

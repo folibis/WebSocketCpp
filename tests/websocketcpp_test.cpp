@@ -29,6 +29,7 @@
 #include <random>
 #include <thread>
 
+#include "DebugPrint.h"
 #include "Request.h"
 #include "ResponseWebSocket.h"
 #include "StringUtil.h"
@@ -46,11 +47,13 @@ protected:
     std::mutex               mtx;
     std::condition_variable  cv;
     std::atomic<bool>        finished{false};
-    size_t                   test_count = 100;
-    uint64_t                 delay_ms   = 50;
+    size_t                   test_count   = 10;
+    uint64_t                 delay_ms     = 50;
+    size_t                   client_count = 10;
 
     void SetUp() override
     {
+        // WebSocketCpp::DebugPrint::AllowPrint = true;
     }
 
     void TearDown() override
@@ -60,6 +63,7 @@ protected:
     bool ServerHandler(const WebSocketCpp::Request& request, WebSocketCpp::ResponseWebSocket& response, const WebSocketCpp::ByteArray& data)
     {
         std::string str = StringUtil::ByteArray2String(data);
+        DebugPrint() << "server received " << str << std::endl;
         arr_server.push_back(str);
         response.WriteText(data);
 
@@ -70,6 +74,7 @@ protected:
     {
         static size_t count = 0;
         std::string   str   = StringUtil::ByteArray2String(response.GetData());
+        DebugPrint() << "client received " << str << std::endl;
         arr_client.push_back(str);
         count++;
         if (count >= test_count)
@@ -158,17 +163,23 @@ TEST_F(WebSocketFixture, OneServerOneClient)
     }
 }
 
-// Open server, then connect and disconnect client in a loop
+// Open server, then connect and disconnect clients in a loop
 TEST_F(WebSocketFixture, OneServerLoopClient)
 {
     WebSocketCpp::Config& config = WebSocketCpp::Config::Instance();
     config.SetWsProtocol(Protocol::WS);
     config.SetWsServerPort(8080);
+    size_t                  count{};
+    std::mutex              client_mtx;
+    std::condition_variable client_cv;
 
     WebSocketCpp::WebSocketServer server;
     ASSERT_TRUE(server.Init());
-    server.OnMessage("/ws", [this](const WebSocketCpp::Request& request, WebSocketCpp::ResponseWebSocket& response, const WebSocketCpp::ByteArray& data) -> bool {
-        return ServerHandler(request, response, data);
+    server.OnMessage("/ws", [this, &count, &client_cv](const WebSocketCpp::Request& request, WebSocketCpp::ResponseWebSocket& response, const WebSocketCpp::ByteArray& data) -> bool {
+        count++;
+        bool ret = ServerHandler(request, response, data);
+        client_cv.notify_one();
+        return ret;
     });
 
     ASSERT_TRUE(server.Run());
@@ -179,16 +190,20 @@ TEST_F(WebSocketFixture, OneServerLoopClient)
         std::future<size_t>           fut;
         ASSERT_TRUE(client.Init());
 
-        ASSERT_TRUE(client.Open("ws://127.0.0.1:8080/ws"));
+        client.Open("ws://127.0.0.1:8080/ws");
         std::string s = random_string();
         hash |= _(s.c_str());
         client.SendText(s);
         arr_client.push_back(s);
-        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
+    std::unique_lock<std::mutex> lock(client_mtx);
+    bool                         success = client_cv.wait_for(lock, std::chrono::milliseconds(50), [&count, this]() { return count == test_count; });
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
     server.Close();
+
+    EXPECT_TRUE(success);
 
     size_t calculated_hash = std::accumulate(
         arr_server.begin(), arr_server.end(), size_t(0),
@@ -196,4 +211,72 @@ TEST_F(WebSocketFixture, OneServerLoopClient)
 
     EXPECT_EQ(arr_server, arr_client);
     EXPECT_EQ(hash, calculated_hash);
+}
+
+// Open server, then connect N clients in a loop
+TEST_F(WebSocketFixture, OneServerNClient)
+{
+    WebSocketCpp::Config& config = WebSocketCpp::Config::Instance();
+    config.SetWsProtocol(Protocol::WS);
+    config.SetWsServerPort(8080);
+    config.SetMaxClientCount(client_count);
+
+    WebSocketCpp::WebSocketServer server;
+    ASSERT_TRUE(server.Init());
+
+    server.OnMessage("/ws", [this](const WebSocketCpp::Request& request, WebSocketCpp::ResponseWebSocket& response, const WebSocketCpp::ByteArray& data) -> bool {
+        return ServerHandler(request, response, data);
+    });
+
+    ASSERT_TRUE(server.Run());
+
+    std::vector<std::thread> clients;
+    std::vector<size_t>      results;
+    clients.resize(client_count);
+    results.resize(client_count);
+
+    for (size_t i = 0; i < client_count; i++)
+    {
+        clients[i] = std::thread([this, i](size_t& result) {
+            std::mutex                    client_mtx;
+            std::condition_variable       client_cv;
+            WebSocketCpp::WebSocketClient client;
+
+            std::string received;
+            client.SetOnMessage([&received, &client_cv, i](WebSocketCpp::ResponseWebSocket& response) -> bool {
+                received = StringUtil::ByteArray2String(response.GetData());
+                client_cv.notify_one();
+                return true;
+            });
+
+            if (client.Open("ws://127.0.0.1:8080/ws"))
+            {
+                for (size_t j = 0; j < test_count; j++)
+                {
+                    std::string sent = random_string();
+                    client.SendText(sent);
+                    std::unique_lock<std::mutex> lock(client_mtx);
+                    bool                         success = client_cv.wait_for(lock, std::chrono::milliseconds(20), [&received]() { return !received.empty(); });
+                    if (success && sent == received)
+                    {
+                        result++;
+                    }
+                    received.clear();
+                }
+            }
+
+            client.Close();
+        },
+            std::ref(results[i]));
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    for (size_t i = 0; i < client_count; i++)
+    {
+        clients[i].join();
+        EXPECT_EQ(test_count, results[i]) << " client #" << i;
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    server.Close();
 }

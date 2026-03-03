@@ -43,13 +43,15 @@ public:
         Undefined = 0,
         Initialized,
         Connected,
-        HandShakeSent,
-        HandShake,
+        HandshakeSent,
+        Handshake,
+        HandshakeFailed,
         BinaryMessage,
         Closed,
     };
 
     WebSocketClient();
+    ~WebSocketClient();
     bool Init() override;
     bool Init(const WebSocketCpp::Config& config);
     bool Run() override;
@@ -71,7 +73,7 @@ public:
     void SetOnStateChanged(const std::function<void(State)>& callback);
 
 protected:
-    void OnDataReady(const ByteArray& data);
+    void OnDataReady(ByteArray&& data);
     void OnClosed();
     bool InitConnection(const Url& url);
     void SetState(State state);
@@ -88,6 +90,9 @@ private:
     State                                    m_state            = State::Undefined;
     std::string                              m_key;
     ByteArray                                m_data;
+    Mutex                                    m_connect_mtx;
+    Signal                                   m_connect_cv;
+    Mutex                                    m_read_mtx;
 };
 
 } // namespace WebSocketCpp

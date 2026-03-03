@@ -14,8 +14,14 @@ WebSocketClient::WebSocketClient()
 {
 }
 
+WebSocketClient::~WebSocketClient()
+{
+    WebSocketClient::Close();
+}
+
 bool WebSocketClient::Init()
 {
+    m_data.reserve(BUFFER_SIZE);
     return true;
 }
 
@@ -61,7 +67,7 @@ bool WebSocketClient::Open(Request& request)
         SetState(State::Connected);
     }
 
-    if (m_messageCallback != nullptr && m_connection->Run() == false)
+    if (m_connection->Run() == false)
     {
         SetLastError("read routine failed: " + m_connection->GetLastError());
         LOG(GetLastError(), LogWriter::LogType::Error);
@@ -82,7 +88,14 @@ bool WebSocketClient::Open(Request& request)
         return false;
     }
 
-    SetState(State::HandShake);
+    SetState(State::Handshake);
+
+    if(m_connect_cv.WaitTimeout(m_connect_mtx, m_config.GetClientConnectTimeoutMs()) == false)
+    {
+        SetState(State::HandshakeFailed);
+        SetLastError("handshake timeout");
+        return false;
+    }
 
     return true;
 }
@@ -171,13 +184,15 @@ void WebSocketClient::SetOnStateChanged(const std::function<void(State)>& callba
     m_stateCallback = callback;
 }
 
-void WebSocketClient::OnDataReady(const ByteArray& data)
+void WebSocketClient::OnDataReady(ByteArray&& data)
 {
-    if (m_state == State::HandShake)
+    Lock lock(m_read_mtx);
+    m_data.insert(m_data.end(), data.begin(), data.end());
+    if (m_state == State::Handshake)
     {
         Response response(0, m_config);
         size_t   all, downloaded;
-        if (response.Parse(data, &all, &downloaded))
+        if (response.Parse(m_data, &all, &downloaded))
         {
             if (response.GetResponseCode() == 101)
             {
@@ -197,10 +212,12 @@ void WebSocketClient::OnDataReady(const ByteArray& data)
                         if (h == key)
                         {
                             SetState(State::BinaryMessage);
+                            m_connect_cv.Fire();
                             if (m_connectCallback != nullptr)
                             {
                                 m_connectCallback(true);
                             }
+                            m_data.erase(m_data.begin(), m_data.begin() + response.GetResponseSize());
                             return;
                         }
                         else
@@ -238,7 +255,6 @@ void WebSocketClient::OnDataReady(const ByteArray& data)
     }
     else if (m_state == State::BinaryMessage)
     {
-        m_data.insert(m_data.end(), data.begin(), data.end());
         ResponseWebSocket response(0);
         if (response.Parse(m_data) == true)
         {

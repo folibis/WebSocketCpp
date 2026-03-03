@@ -4,7 +4,11 @@ using namespace WebSocketCpp;
 
 ThreadWorker::ThreadWorker()
 {
-    m_isRunning = false;
+}
+
+ThreadWorker::~ThreadWorker()
+{
+    Stop();
 }
 
 void ThreadWorker::SetFunction(const std::function<ThreadRoutine>& func)
@@ -55,10 +59,7 @@ void ThreadWorker::StopNoWait()
 
 void ThreadWorker::Wait() const
 {
-    if (m_isRunning)
-    {
-        pthread_join(m_thread, nullptr);
-    }
+    pthread_join(m_thread, nullptr);
 }
 
 void* ThreadWorker::StartThread(void* cls)

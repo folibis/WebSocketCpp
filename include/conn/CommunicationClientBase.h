@@ -49,7 +49,7 @@ public:
     bool              Connect(const std::string& host = "", int port = 0) override;
     virtual bool      Write(const ByteArray& data);
     virtual ByteArray Read(size_t length);
-    virtual bool      SetDataReadyCallback(const std::function<void(const ByteArray& data)>& callback)
+    virtual bool      SetDataReadyCallback(const std::function<void(ByteArray&& data)>& callback)
     {
         m_dataReadyCallback = callback;
         return true;
@@ -61,10 +61,10 @@ public:
     };
 
 protected:
-    SocketPool                                 m_socket;
-    std::function<void(const ByteArray& data)> m_dataReadyCallback       = nullptr;
-    std::function<void()>                      m_closeConnectionCallback = nullptr;
-    bool                                       CloseConnection();
+    SocketPool                            m_socket;
+    std::function<void(ByteArray&& data)> m_dataReadyCallback       = nullptr;
+    std::function<void()>                 m_closeConnectionCallback = nullptr;
+    bool                                  CloseConnection();
 
     ThreadWorker m_thread;
     void*        ReadThread(bool& running);
