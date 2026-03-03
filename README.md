@@ -133,7 +133,7 @@ config.SetSslKey("~/.ssh/server.key");
 
 Embedding this library into your application is quite simple.
 You can either use `FetchContent` or download it manually:
-```
+```cmake
 include(FetchContent)
 
 FetchContent_Declare(
@@ -147,7 +147,7 @@ FetchContent_MakeAvailable(websocketcpp)
 target_link_libraries(your_target PRIVATE websocketcpp)
 ```
 or 
-```
+```cmake
 # Disable unnecessary tests/examples and build the library statically
 set(WEBSOCKETCPP_STATIC_LIB ON CACHE BOOL "" FORCE)
 set(WEBSOCKETCPP_EXAMPLES OFF CACHE BOOL "" FORCE)
