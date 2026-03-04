@@ -83,10 +83,8 @@ protected:
     void*                                   ReadThread(bool& running);
     ThreadWorker                            m_readThread;
     std::vector<ByteArray>                  m_readBuffer;
-    ThreadPool<int>                         m_connectedThreadPool;
     ThreadPool<int, const uint8_t*, size_t> m_processThreadPool;
 
-    void                                         connectedTask(int clientID);
     void                                         processTask(int clientID, const uint8_t* data, size_t size);
     std::function<void(int, const std::string&)> m_newConnectionCallback   = nullptr;
     std::function<void(int, ByteArray data)>     m_dataReadyCallback       = nullptr;

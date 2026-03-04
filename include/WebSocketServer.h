@@ -127,7 +127,7 @@ private:
     Mutex                                    m_requestMutex;
     Signal                                   m_signalCondition;
     std::list<RequestData>                   m_requestQueue;
-    Config&                                  m_config;
+    const Config&                            m_config;
     std::vector<RouteWebSocket>              m_routes;
     Mutex                                    m_routeMutex;
     OnConnectCallback                        m_connect_callback;

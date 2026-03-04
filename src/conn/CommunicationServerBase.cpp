@@ -22,8 +22,7 @@ CommunicationServerBase::CommunicationServerBase(
     SocketPool::Options options)
     : m_sockets(max_client_count + 1, SocketPool::Service::Server, domain, type, options),
       m_readBuffer(max_client_count, ByteArray(READ_BUFFER_SIZE)),
-      m_processThreadPool(max_client_count),
-      m_connectedThreadPool(max_client_count)
+      m_processThreadPool(max_client_count)
 {
 }
 
@@ -64,10 +63,6 @@ bool CommunicationServerBase::Init()
             processTask(clientID, data, size);
         });
 
-        m_connectedThreadPool.Init([this](int clientID) {
-            connectedTask(clientID);
-        });
-
         setInitialized(true);
         retval = true;
     }
@@ -91,7 +86,6 @@ bool CommunicationServerBase::Run()
         auto f = std::bind(&CommunicationServerBase::ReadThread, this, std::placeholders::_1);
         m_readThread.SetFunction(f);
         setRunning(m_readThread.Start());
-        m_connectedThreadPool.Run();
         m_processThreadPool.Run();
         if (IsRunning() == false)
         {
@@ -148,10 +142,7 @@ bool CommunicationServerBase::Close(bool wait)
         m_readThread.Stop(true);
         setRunning(false);
         setInitialized(false);
-
-        m_connectedThreadPool.Stop();
         m_processThreadPool.Stop();
-
         CloseConnections();
     }
 
@@ -239,7 +230,7 @@ void* CommunicationServerBase::ReadThread(bool& running)
                             {
                                 if (m_newConnectionCallback != nullptr)
                                 {
-                                    m_connectedThreadPool.Submit(id);
+                                    m_processThreadPool.Submit(id, nullptr, 0);
                                 }
                             }
                             else
@@ -275,12 +266,14 @@ void* CommunicationServerBase::ReadThread(bool& running)
     return nullptr;
 }
 
-void CommunicationServerBase::connectedTask(int clientID)
-{
-    m_newConnectionCallback(clientID, m_sockets.GetRemoteAddress(clientID));
-}
-
 void CommunicationServerBase::processTask(int clientID, const uint8_t* data, size_t size)
 {
-    m_dataReadyCallback(clientID, ByteArray(data, data + size));
+    if (data == nullptr)
+    {
+        m_newConnectionCallback(clientID, m_sockets.GetRemoteAddress(clientID));
+    }
+    else
+    {
+        m_dataReadyCallback(clientID, ByteArray(data, data + size));
+    }
 }
