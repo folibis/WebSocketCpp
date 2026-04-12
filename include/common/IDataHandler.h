@@ -1,54 +1,38 @@
 /*
- * Copyright (c) 2026 ruslan@muhlinin.com
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  * Copyright (c) 2026 ruslan@muhlinin.com
+ *  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in all
+ *  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- */
+ *  */
 
-#ifndef WEB_SOCKET_CPP_LOCK_H
-#define WEB_SOCKET_CPP_LOCK_H
+#ifndef IDATAHANDLER_H
+#define IDATAHANDLER_H
 
-#include "Mutex.h"
+#include <cstddef>
+#include <cstdint>
 
 namespace WebSocketCpp
 {
 
-class Lock
+class IDataHandler
 {
 public:
-    explicit Lock(Mutex& mutex);
-    ~Lock();
-    Lock(const Lock& other)            = delete;
-    Lock& operator=(const Lock& other) = delete;
-    Lock(Lock&& other)                 = delete;
-    Lock& operator=(Lock&& other)      = delete;
-    bool  IsSuccessful()
-    {
-        return m_successful;
-    }
-    void Unlock();
-
-private:
-    Mutex& m_mutex;
-    bool   m_locked     = true;
-    bool   m_successful = true;
+    virtual void OnConnect(int)                                = 0;
+    virtual void OnData(int, const uint8_t* data, size_t size) = 0;
 };
 
 } // namespace WebSocketCpp
 
-#endif // WEB_SOCKET_CPP_LOCK_H
+#endif // IDATAHANDLER_H

@@ -17,14 +17,11 @@
  * SOFTWARE.
  *  */
 
-#ifndef WEB_SOCKET_CPP_COMMUNICATIONTCPCLIENT_H
-#define WEB_SOCKET_CPP_COMMUNICATIONTCPCLIENT_H
+#ifndef WEB_SOCKET_CPP_COMMUNICATION_TCP_CLIENT_H
+#define WEB_SOCKET_CPP_COMMUNICATION_TCP_CLIENT_H
 
-#include <poll.h>
-
+#include "ClientSocket.h"
 #include "CommunicationClientBase.h"
-
-#define BUFFER_SIZE 1024
 
 namespace WebSocketCpp
 {
@@ -33,10 +30,35 @@ class CommunicationTcpClient : public CommunicationClientBase
 {
 public:
     CommunicationTcpClient();
-    ~CommunicationTcpClient();
+    ~CommunicationTcpClient() override;
+
+    CommunicationTcpClient(const CommunicationTcpClient&)            = delete;
+    CommunicationTcpClient& operator=(const CommunicationTcpClient&) = delete;
+
+    void        SetPort(int port) override;
+    int         GetPort() const override;
+    void        SetHost(const std::string& host) override;
+    std::string GetHost() const override;
+
     bool Init() override;
+    bool Connect(const std::string& host = "", int port = 0) override;
+    bool Run() override;
+    bool Close(bool wait = true) override;
+    bool WaitFor() override;
+
+    bool Write(const ByteArray& data) override;
+
+    bool SetDataReadyCallback(DataReadyCallback callback) override;
+    bool SetCloseConnectionCallback(CloseConnectionCallback callback) override;
+
+private:
+    ClientSocket            m_client;
+    std::string             m_host{};
+    int                     m_port{80};
+    DataReadyCallback       m_data_cb;
+    CloseConnectionCallback m_close_cb;
 };
 
 } // namespace WebSocketCpp
 
-#endif // WEB_SOCKET_CPP_COMMUNICATIONTCPCLIENT_H
+#endif // WEB_SOCKET_CPP_COMMUNICATION_TCP_CLIENT_H

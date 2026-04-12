@@ -20,29 +20,57 @@
  * SOFTWARE.
  */
 
-#ifndef WEB_SOCKET_CPP_SIGNAL_H
-#define WEB_SOCKET_CPP_SIGNAL_H
+#ifndef WEB_SOCKET_CPP_SESSION_H
+#define WEB_SOCKET_CPP_SESSION_H
 
+#include <condition_variable>
+#include <cstddef>
 #include <cstdint>
-#include "pthread.h"
+#include <mutex>
+#include <queue>
+#include <tuple>
 
-#include "Mutex.h"
+#include "IDataHandler.h"
+#include "MemoryPool.h"
+#include "ThreadWorker.h"
 
 namespace WebSocketCpp
 {
 
-class Signal
+class Session
 {
 public:
-    Signal();
-    void Fire();
-    void Wait(Mutex& mutex);
-    bool WaitTimeout(Mutex& mutex, uint64_t ms);
+    Session(IDataHandler* handler, MemoryPool* pool);
+    ~Session();
+
+    Session(const Session&)            = delete;
+    Session& operator=(const Session&) = delete;
+    Session(Session&&)                 = delete;
+    Session& operator=(Session&&)      = delete;
+
+    void     Open(int clientID);
+    void     Stop();
+    bool     IsRunning() const;
+    void     Submit(int clientID, const uint8_t* data, size_t size);
+    uint8_t* getData(size_t size);
+
+protected:
+    void* Task(bool& running);
 
 private:
-    pthread_cond_t m_signalCondition = PTHREAD_COND_INITIALIZER;
+    using ArgsTuple = std::tuple<int, const uint8_t*, size_t>;
+
+    static constexpr uint64_t DEFAULT_WAIT_TIMEOUT_MS = 100;
+
+    ThreadWorker            m_thread;
+    IDataHandler*           m_handler = nullptr;
+    MemoryPool*             m_pool    = nullptr;
+    std::mutex              m_queueMutex;
+    std::condition_variable m_signal;
+    bool                    m_pending{false};
+    std::queue<ArgsTuple>   m_queue;
 };
 
 } // namespace WebSocketCpp
 
-#endif // WEB_SOCKET_CPP_SIGNAL_H
+#endif // WEB_SOCKET_CPP_SESSION_H

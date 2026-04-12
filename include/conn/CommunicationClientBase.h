@@ -17,17 +17,13 @@
  * SOFTWARE.
  *  */
 
-#ifndef WEB_SOCKET_CPP_CommunicationClientBase_H
-#define WEB_SOCKET_CPP_CommunicationClientBase_H
+#ifndef WEB_SOCKET_CPP_COMMUNICATION_CLIENT_BASE_H
+#define WEB_SOCKET_CPP_COMMUNICATION_CLIENT_BASE_H
+
+#include <functional>
 
 #include "ICommunication.h"
-#include "SocketPool.h"
-#include "ThreadWorker.h"
 #include "common.h"
-
-#include "functional"
-
-#define BUFFER_SIZE 1024
 
 namespace WebSocketCpp
 {
@@ -35,42 +31,31 @@ namespace WebSocketCpp
 class CommunicationClientBase : public ICommunication
 {
 public:
-    CommunicationClientBase(SocketPool::Domain domain, SocketPool::Type type, SocketPool::Options options);
+    virtual ~CommunicationClientBase() = default;
 
-    void        SetPort(int port) override;
-    int         GetPort() const override;
-    void        SetHost(const std::string& host) override;
-    std::string GetHost() const override;
+    using DataReadyCallback       = std::function<void(ByteArray&&)>;
+    using CloseConnectionCallback = std::function<void()>;
 
-    bool              Init() override;
-    bool              Run() override;
-    bool              Close(bool wait = true) override;
-    bool              WaitFor() override;
-    bool              Connect(const std::string& host = "", int port = 0) override;
-    virtual bool      Write(const ByteArray& data);
-    virtual ByteArray Read(size_t length);
-    virtual bool      SetDataReadyCallback(const std::function<void(ByteArray&& data)>& callback)
+    virtual bool Write(const ByteArray& data) = 0;
+
+    virtual bool SetDataReadyCallback(DataReadyCallback callback)       = 0;
+    virtual bool SetCloseConnectionCallback(CloseConnectionCallback callback) = 0;
+
+    bool IsConnected() const override
     {
-        m_dataReadyCallback = callback;
-        return true;
-    };
-    virtual bool SetCloseConnectionCallback(const std::function<void()>& callback)
-    {
-        m_closeConnectionCallback = callback;
-        return true;
-    };
+        return m_connected;
+    }
 
 protected:
-    SocketPool                            m_socket;
-    std::function<void(ByteArray&& data)> m_dataReadyCallback       = nullptr;
-    std::function<void()>                 m_closeConnectionCallback = nullptr;
-    bool                                  CloseConnection();
+    void setConnected(bool connected)
+    {
+        m_connected = connected;
+    }
 
-    ThreadWorker m_thread;
-    void*        ReadThread(bool& running);
-    char         m_readBuffer[BUFFER_SIZE]{};
+private:
+    bool m_connected = false;
 };
 
 } // namespace WebSocketCpp
 
-#endif // WEB_SOCKET_CPP_CommunicationClientBase_H
+#endif // WEB_SOCKET_CPP_COMMUNICATION_CLIENT_BASE_H

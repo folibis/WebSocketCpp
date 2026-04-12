@@ -54,6 +54,11 @@ const ByteArray& ResponseWebSocket::GetData() const
     return m_data;
 }
 
+size_t ResponseWebSocket::GetSize() const
+{
+    return m_size;
+}
+
 bool ResponseWebSocket::Send(CommunicationServerBase* communication) const
 {
     try
@@ -150,6 +155,7 @@ bool ResponseWebSocket::Parse(const ByteArray& data)
 
     if (data.size() >= size + headerSize)
     {
+        m_size = headerSize + static_cast<size_t>(size);
         m_data.insert(m_data.end(), data.begin() + headerSize, data.begin() + headerSize + size);
         return true;
     }

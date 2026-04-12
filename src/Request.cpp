@@ -18,6 +18,7 @@ bool Request::Parse(const ByteArray& data)
     {
         if (ParseRequestLine(data, m_requestLineLength) == false)
         {
+            m_requestLineLength = 0; // reset so the next call retries
             SetLastError("Request: error parsing request line: " + GetLastError());
             return false;
         }

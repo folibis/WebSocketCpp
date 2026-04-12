@@ -1,35 +1,12 @@
-/*
- *  * Copyright (c) 2026 ruslan@muhlinin.com
- *  * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *  * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- *  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *  */
-
 #ifdef WITH_OPENSSL
 #ifndef WEB_SOCKET_CPP_COMMUNICATION_SSL_SERVER_H
 #define WEB_SOCKET_CPP_COMMUNICATION_SSL_SERVER_H
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-#include <poll.h>
-#include <pthread.h>
 
 #include "CommunicationServerBase.h"
-
-#define MAX_CLIENTS      10
-#define READ_BUFFER_SIZE 1024
+#include "ServerSocket.h"
 
 namespace WebSocketCpp
 {
@@ -38,9 +15,39 @@ class CommunicationSslServer : public CommunicationServerBase
 {
 public:
     CommunicationSslServer(const std::string& cert, const std::string& key) noexcept;
+    ~CommunicationSslServer() override;
 
-    bool Init() override final;
-    bool Connect(const std::string& address = "", int port = 0) override final;
+    CommunicationSslServer(const CommunicationSslServer&)            = delete;
+    CommunicationSslServer& operator=(const CommunicationSslServer&) = delete;
+
+    void        SetPort(int port) override;
+    int         GetPort() const override;
+    void        SetHost(const std::string& host) override;
+    std::string GetHost() const override;
+
+    bool Init() override;
+    bool Connect(const std::string& address = "", int port = 0) override;
+    bool Run() override;
+    bool Close(bool wait = true) override;
+    bool WaitFor() override;
+
+    bool Write(int connID, ByteArray& data) override;
+    bool Write(int connID, ByteArray& data, size_t size) override;
+    bool CloseConnection(int connID) override;
+
+    bool SetNewConnectionCallback(NewConnectionCallback callback) override;
+    bool SetDataReadyCallback(DataReadyCallback callback) override;
+    bool SetCloseConnectionCallback(CloseConnectionCallback callback) override;
+
+private:
+    ServerSocket            m_server;
+    std::string             m_host{"*"};
+    int                     m_port{443};
+    std::string             m_cert;
+    std::string             m_key;
+    NewConnectionCallback   m_new_conn_cb;
+    DataReadyCallback       m_data_cb;
+    CloseConnectionCallback m_close_cb;
 };
 
 } // namespace WebSocketCpp

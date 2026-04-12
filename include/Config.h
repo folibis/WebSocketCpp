@@ -23,6 +23,7 @@
 #ifndef WEB_SOCKET_CPP_HTTPCONFIG_H
 #define WEB_SOCKET_CPP_HTTPCONFIG_H
 
+#include <functional>
 #include <string>
 
 #include "common.h"
@@ -39,7 +40,7 @@ public:                               \
     void Set##NAME(const TYPE& value) \
     {                                 \
         m_##NAME = value;             \
-        OnChanged(TOSTRING(NAME));    \
+        Changed(TOSTRING(NAME));    \
     }                                 \
                                       \
 private:                              \
@@ -54,25 +55,23 @@ public:
     static Config& Instance();
     bool           Init();
     bool           Load();
+    std::string    ToString() const;
 
-    std::string RootFolder() const;
-    std::string ToString() const;
+    using OnChangeCallback = std::function<void(const std::string& name)>;
+    void OnChange(OnChangeCallback callback);
 
 protected:
     Config();
-    void SetRootFolder();
-    void OnChanged(const std::string& value);
+    void Changed(const std::string& value);
 
 private:
-    bool        m_initialized = false;
-    std::string m_rootFolder;
+    bool m_initialized = false;
+    OnChangeCallback m_change_callback;
 
     PROPERTY(std::string, ServerName, WEB_SOCKET_CPP_CANONICAL_NAME)
-    PROPERTY(std::string, Root, "public")
     PROPERTY(std::string, IndexFile, "index.html")
     PROPERTY(std::string, SslSertificate, "cert.pem")
     PROPERTY(std::string, SslKey, "key.pem")
-    PROPERTY(bool, TempFile, false)
     PROPERTY(bool, WsProcessDefault, true)
     PROPERTY(int, WsServerPort, 8081)
     PROPERTY(Protocol, WsProtocol, Protocol::WS)

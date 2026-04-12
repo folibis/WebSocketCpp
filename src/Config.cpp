@@ -1,7 +1,6 @@
 #include "Config.h"
 
 #include "DebugPrint.h"
-#include "FileSystem.h"
 #include "common.h"
 
 using namespace WebSocketCpp;
@@ -30,7 +29,6 @@ bool Config::Init()
     }
     else
     {
-        SetRootFolder();
         m_initialized = true;
     }
 
@@ -42,40 +40,23 @@ bool Config::Load()
     return true;
 }
 
-std::string Config::RootFolder() const
-{
-    return m_rootFolder;
-}
-
 std::string Config::ToString() const
 {
     return std::string("Config :") + "\n" +
            "\tname: " + m_ServerName + "\n" +
-           "\tWebSocket protocol: " + Protocol2String(m_WsProtocol) + "\n" +
-           "\tWebSocket port: " + std::to_string(m_WsServerPort) + "\n" +
-           "\tRoot : " + m_rootFolder + "\n";
+           "\tprotocol: " + Protocol2String(m_WsProtocol) + "\n" +
+           "\tport: " + std::to_string(m_WsServerPort) + "\n";
 }
 
-void Config::SetRootFolder()
+void Config::OnChange(OnChangeCallback callback)
 {
-    std::string root      = FileSystem::NormalizePath(GetRoot());
-    std::string root_full = FileSystem::NormalizePath(FileSystem::GetFullPath(root));
-    if (root != root_full)
-    {
-        m_rootFolder = FileSystem::NormalizePath(FileSystem::GetApplicationFolder()) + root;
-    }
-    else
-    {
-        m_rootFolder = root;
-    }
+    m_change_callback = std::move(callback);
 }
 
-void Config::OnChanged(const std::string& value)
+void Config::Changed(const std::string& value)
 {
-    switch (_(value.c_str()))
+    if(m_change_callback)
     {
-        case _("Root"):
-            SetRootFolder();
-            break;
+        m_change_callback(value);
     }
 }

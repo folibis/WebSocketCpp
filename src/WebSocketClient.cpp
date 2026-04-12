@@ -1,5 +1,8 @@
 #include "WebSocketClient.h"
 
+#include <chrono>
+#include <mutex>
+
 #include "CommunicationSslClient.h"
 #include "CommunicationTcpClient.h"
 #include "Data.h"
@@ -21,7 +24,7 @@ WebSocketClient::~WebSocketClient()
 
 bool WebSocketClient::Init()
 {
-    m_data.reserve(BUFFER_SIZE);
+    m_data.reserve(1024);
     return true;
 }
 
@@ -81,6 +84,13 @@ bool WebSocketClient::Open(Request& request)
     m_key = Data::Base64Encode(StringUtil::GenerateRandomString(16));
     header.SetHeader("Sec-WebSocket-Key", m_key);
     header.SetHeader("Sec-WebSocket-Version", WS_VERSION);
+
+    {
+        std::lock_guard<std::mutex> lock(m_handshake_mtx);
+        m_handshake_done = false;
+    }
+    SetState(State::Handshake);
+
     if (request.Send(m_connection) == false)
     {
         SetLastError("request sending error: " + request.GetLastError());
@@ -88,13 +98,17 @@ bool WebSocketClient::Open(Request& request)
         return false;
     }
 
-    SetState(State::Handshake);
-
-    if(m_connect_cv.WaitTimeout(m_connect_mtx, m_config.GetClientConnectTimeoutMs()) == false)
     {
-        SetState(State::HandshakeFailed);
-        SetLastError("handshake timeout");
-        return false;
+        std::unique_lock<std::mutex> lock(m_handshake_mtx);
+        bool                         ok = m_handshake_cv.wait_for(lock,
+                                    std::chrono::milliseconds(m_config.GetClientConnectTimeoutMs()),
+                                    [this]() { return m_handshake_done; });
+        if (!ok)
+        {
+            SetState(State::HandshakeFailed);
+            SetLastError("handshake timeout");
+            return false;
+        }
     }
 
     return true;
@@ -154,39 +168,39 @@ bool WebSocketClient::SendPing()
     return request.Send(m_connection.get());
 }
 
-void WebSocketClient::SetOnConnect(const std::function<void(bool)>& callback)
+void WebSocketClient::SetOnConnect(OnConnectCallback callback)
 {
-    m_connectCallback = callback;
+    m_connectCallback = std::move(callback);
 }
 
-void WebSocketClient::SetOnClose(const std::function<void()>& callback)
+void WebSocketClient::SetOnClose(OnCloseCallback callback)
 {
-    m_closeCallback = callback;
+    m_closeCallback = std::move(callback);
 }
 
-void WebSocketClient::SetOnError(const std::function<void(const std::string&)>& callback)
+void WebSocketClient::SetOnError(OnErrorCallback callback)
 {
-    m_errorCallback = callback;
+    m_errorCallback = std::move(callback);
 }
 
-void WebSocketClient::SetOnMessage(const std::function<void(ResponseWebSocket&)>& callback)
+void WebSocketClient::SetOnMessage(OnMessageCallback callback)
 {
-    m_messageCallback = callback;
+    m_messageCallback = std::move(callback);
 }
 
-void WebSocketClient::SetProgressCallback(const std::function<void(size_t, size_t)>& callback)
+void WebSocketClient::SetProgressCallback(ProgressCallback callback)
 {
-    m_progressCallback = callback;
+    m_progressCallback = std::move(callback);
 }
 
-void WebSocketClient::SetOnStateChanged(const std::function<void(State)>& callback)
+void WebSocketClient::SetOnStateChanged(OnStateChangedCallback callback)
 {
-    m_stateCallback = callback;
+    m_stateCallback = std::move(callback);
 }
 
 void WebSocketClient::OnDataReady(ByteArray&& data)
 {
-    Lock lock(m_read_mtx);
+    std::lock_guard<std::mutex> lock(m_read_mtx);
     m_data.insert(m_data.end(), data.begin(), data.end());
     if (m_state == State::Handshake)
     {
@@ -212,7 +226,11 @@ void WebSocketClient::OnDataReady(ByteArray&& data)
                         if (h == key)
                         {
                             SetState(State::BinaryMessage);
-                            m_connect_cv.Fire();
+                            {
+                                std::lock_guard<std::mutex> lock(m_handshake_mtx);
+                                m_handshake_done = true;
+                            }
+                            m_handshake_cv.notify_one();
                             if (m_connectCallback != nullptr)
                             {
                                 m_connectCallback(true);
@@ -251,19 +269,22 @@ void WebSocketClient::OnDataReady(ByteArray&& data)
             m_connectCallback(false);
         }
 
-        Close();
+        Close(false);
     }
     else if (m_state == State::BinaryMessage)
     {
-        ResponseWebSocket response(0);
-        if (response.Parse(m_data) == true)
+        while (true)
         {
+            ResponseWebSocket response(0);
+            if (response.Parse(m_data) == false)
+            {
+                break;
+            }
+            m_data.erase(m_data.begin(), m_data.begin() + response.GetSize());
             if (m_messageCallback != nullptr)
             {
                 m_messageCallback(response);
             }
-
-            m_data.clear();
         }
     }
 }

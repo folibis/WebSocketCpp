@@ -1,12 +1,12 @@
 #include "WebSocketServer.h"
 
 #include <cstring>
+#include <mutex>
 
 #include "CommunicationSslServer.h"
 #include "CommunicationTcpServer.h"
 #include "Data.h"
 #include "FileSystem.h"
-#include "Lock.h"
 #include "LogWriter.h"
 #include "common.h"
 #include "common_ws.h"
@@ -105,7 +105,6 @@ bool WebSocketServer::Run()
         return false;
     }
 
-
     return IsRunning();
 }
 
@@ -128,9 +127,9 @@ bool WebSocketServer::WaitFor()
 
 void WebSocketServer::OnMessage(const std::string& path, OnMessageCallback func)
 {
-    Lock lock(m_routeMutex);
-    auto it = std::find_if(m_routes.begin(), m_routes.end(),
-        [&path](const RouteWebSocket& r) { return r.GetPath() == path; });
+    std::lock_guard<std::mutex> lock(m_routeMutex);
+    auto                        it = std::find_if(m_routes.begin(), m_routes.end(),
+                               [&path](const RouteWebSocket& r) { return r.GetPath() == path; });
 
     if (it != m_routes.end())
     {
@@ -236,7 +235,7 @@ void* WebSocketServer::RequestThread(bool& running)
 {
     while (m_requestThread.IsRunning())
     {
-        if(HasData() == false)
+        if (HasData() == false)
         {
             WaitForSignal();
         }
@@ -251,19 +250,21 @@ void* WebSocketServer::RequestThread(bool& running)
 
 void WebSocketServer::SendSignal()
 {
-    Lock lock(m_signalMutex);
-    m_signalCondition.Fire();
+    std::lock_guard<std::mutex> lock(m_signalMutex);
+    m_pending_signal = true;
+    m_signalCondition.notify_one();
 }
 
 void WebSocketServer::WaitForSignal()
 {
-    Lock lock(m_signalMutex);
-    m_signalCondition.Wait(m_signalMutex);
+    std::unique_lock<std::mutex> lock(m_signalMutex);
+    m_signalCondition.wait(lock, [this]() { return m_pending_signal; });
+    m_pending_signal = false;
 }
 
 void WebSocketServer::PutToQueue(int connID, ByteArray&& data)
 {
-    Lock lock(m_queueMutex);
+    std::lock_guard<std::mutex> lock(m_queueMutex);
     for (auto& req : m_requestQueue)
     {
         if (req.connID == connID)
@@ -276,13 +277,13 @@ void WebSocketServer::PutToQueue(int connID, ByteArray&& data)
 
 bool WebSocketServer::IsQueueEmpty()
 {
-    Lock lock(m_queueMutex);
+    std::lock_guard<std::mutex> lock(m_queueMutex);
     return m_requestQueue.empty();
 }
 
 void WebSocketServer::InitConnection(int connID, const std::string& remote)
 {
-    Lock lock(m_queueMutex);
+    std::lock_guard<std::mutex> lock(m_queueMutex);
 
     if (getRequest(connID) == nullptr)
     {
@@ -292,8 +293,8 @@ void WebSocketServer::InitConnection(int connID, const std::string& remote)
 
 bool WebSocketServer::CheckData()
 {
-    bool retval = false;
-    Lock lock(m_queueMutex);
+    bool                        retval = false;
+    std::lock_guard<std::mutex> lock(m_queueMutex);
 
     for (RequestData& requestData : m_requestQueue)
     {
@@ -339,8 +340,8 @@ bool WebSocketServer::CheckWsHeader(RequestData& requestData)
 
 bool WebSocketServer::CheckWsFrame(RequestData& requestData)
 {
-    bool retval = false;
-    Lock lock(m_requestMutex);
+    bool                        retval = false;
+    std::lock_guard<std::mutex> lock(m_requestMutex);
 
     RequestWebSocket request;
     if (request.Parse(requestData.data))
@@ -358,7 +359,7 @@ bool WebSocketServer::CheckWsFrame(RequestData& requestData)
 
 void WebSocketServer::ProcessRequests()
 {
-    Lock lock(m_queueMutex);
+    std::lock_guard<std::mutex> lock(m_queueMutex);
 
     for (auto& entry : m_requestQueue)
     {
@@ -374,7 +375,7 @@ void WebSocketServer::ProcessRequests()
             }
             else
             {
-                Lock lock(m_requestMutex);
+                std::lock_guard<std::mutex> lock(m_requestMutex);
                 if (entry.requestList.size() > 0)
                 {
                     auto it = entry.requestList.begin();
@@ -402,7 +403,7 @@ bool WebSocketServer::HasData()
 {
     for (auto& entry : m_requestQueue)
     {
-        if(!entry.data.empty() && entry.handshake == true)
+        if (!entry.data.empty() || entry.readyForDispatch)
         {
             return true;
         }
@@ -413,7 +414,7 @@ bool WebSocketServer::HasData()
 
 void WebSocketServer::RemoveFromQueue(int connID)
 {
-    Lock lock(m_queueMutex);
+    std::lock_guard<std::mutex> lock(m_queueMutex);
 
     for (auto it = m_requestQueue.begin(); it != m_requestQueue.end(); ++it)
     {
@@ -491,7 +492,7 @@ bool WebSocketServer::ProcessWsRequest(Request& request, const RequestWebSocket&
         case MessageType::Text:
         case MessageType::Binary:
         {
-            Lock lock(m_routeMutex);
+            std::lock_guard<std::mutex> lock(m_routeMutex);
             for (auto& route : m_routes)
             {
                 if (route.IsMatch(request))

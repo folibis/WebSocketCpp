@@ -21,19 +21,19 @@
 #ifndef WEB_SOCKET_CPP_WEBSOCKETSERVER_H
 #define WEB_SOCKET_CPP_WEBSOCKETSERVER_H
 
+#include <condition_variable>
 #include <list>
 #include <memory>
+#include <mutex>
 
 #include "CommunicationServerBase.h"
 #include "Config.h"
 #include "IErrorable.h"
 #include "IRunnable.h"
-#include "Mutex.h"
 #include "Request.h"
 #include "RequestWebSocket.h"
 #include "ResponseWebSocket.h"
 #include "RouteWebSocket.h"
-#include "Signal.h"
 #include "ThreadWorker.h"
 
 namespace WebSocketCpp
@@ -122,14 +122,15 @@ private:
     std::unique_ptr<CommunicationServerBase> m_server   = nullptr;
     Protocol                                 m_protocol = Protocol::Undefined;
     ThreadWorker                             m_requestThread;
-    Mutex                                    m_queueMutex;
-    Mutex                                    m_signalMutex;
-    Mutex                                    m_requestMutex;
-    Signal                                   m_signalCondition;
+    std::mutex                               m_queueMutex;
+    std::mutex                               m_signalMutex;
+    std::mutex                               m_requestMutex;
+    std::condition_variable                  m_signalCondition;
+    bool                                     m_pending_signal{false};
     std::list<RequestData>                   m_requestQueue;
     const Config&                            m_config;
     std::vector<RouteWebSocket>              m_routes;
-    Mutex                                    m_routeMutex;
+    std::mutex                               m_routeMutex;
     OnConnectCallback                        m_connect_callback;
     OnDisconnectCallback                     m_disconnect_callback;
 };

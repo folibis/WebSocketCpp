@@ -31,11 +31,18 @@ bool ThreadWorker::Start()
     ClearError();
     m_isRunning = true;
 
-    if (pthread_create(&m_thread, nullptr, ThreadWorker::StartThread, this) != 0)
-    {
-        SetLastError("failed to starting a thread");
-        return false;
-    }
+    m_thread = std::thread([this]() {
+        void* res = nullptr;
+        if (m_func)
+        {
+            res = m_func(m_isRunning);
+        }
+        SetStop();
+        if (m_funcFinish)
+        {
+            m_funcFinish(res);
+        }
+    });
 
     return true;
 }
@@ -45,10 +52,10 @@ void ThreadWorker::Stop(bool wait)
     if (m_isRunning)
     {
         m_isRunning = false;
-        if (wait)
-        {
-            pthread_join(m_thread, nullptr);
-        }
+    }
+    if (wait && m_thread.joinable())
+    {
+        m_thread.join();
     }
 }
 
@@ -57,25 +64,12 @@ void ThreadWorker::StopNoWait()
     m_isRunning = false;
 }
 
-void ThreadWorker::Wait() const
+void ThreadWorker::Wait()
 {
-    pthread_join(m_thread, nullptr);
-}
-
-void* ThreadWorker::StartThread(void* cls)
-{
-    void*         res      = nullptr;
-    ThreadWorker* instance = static_cast<ThreadWorker*>(cls);
-    if (instance->m_func)
+    if (m_thread.joinable())
     {
-        res = instance->m_func(instance->m_isRunning);
+        m_thread.join();
     }
-    instance->SetStop();
-    if (instance->m_funcFinish)
-    {
-        instance->m_funcFinish(res);
-    }
-    return res;
 }
 
 void ThreadWorker::SetStop()

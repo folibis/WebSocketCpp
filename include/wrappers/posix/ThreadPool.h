@@ -23,18 +23,15 @@
 #ifndef WEB_SOCKET_CPP_THREAD_POOL_H
 #define WEB_SOCKET_CPP_THREAD_POOL_H
 
-#include <pthread.h>
-#include <unistd.h>
-
 #include <atomic>
+#include <chrono>
+#include <condition_variable>
 #include <cstddef>
 #include <functional>
+#include <mutex>
 #include <queue>
+#include <thread>
 #include <vector>
-
-#include "Lock.h"
-#include "Mutex.h"
-#include "Signal.h"
 
 namespace WebSocketCpp
 {
@@ -45,7 +42,7 @@ class ThreadPool
 public:
     using Task = std::function<void(Args...)>;
 
-    explicit ThreadPool(size_t threads = static_cast<size_t>(sysconf(_SC_NPROCESSORS_ONLN)), size_t timeout_ms = 100)
+    explicit ThreadPool(size_t threads = std::thread::hardware_concurrency(), size_t timeout_ms = 100)
         : m_running(false),
           m_threadCount(threads),
           m_timeoutMs(timeout_ms)
@@ -67,7 +64,6 @@ public:
             return false;
         }
         m_task = std::move(task);
-        m_workers.resize(m_threadCount);
         return true;
     }
 
@@ -81,11 +77,7 @@ public:
         m_running = true;
         for (size_t i = 0; i < m_threadCount; i++)
         {
-            if (pthread_create(&m_workers[i], nullptr, WorkerThread, this) != 0)
-            {
-                Stop();
-                return false;
-            }
+            m_workers.emplace_back([this]() { WorkerThread(); });
         }
         return true;
     }
@@ -93,10 +85,13 @@ public:
     void Stop()
     {
         m_running = false;
-        m_cv.Fire();
+        m_cv.notify_all();
         for (auto& w : m_workers)
         {
-            pthread_join(w, nullptr);
+            if (w.joinable())
+            {
+                w.join();
+            }
         }
         m_workers.clear();
     }
@@ -107,9 +102,9 @@ public:
         if (!m_running)
             return;
         {
-            Lock lock(m_mtx);
+            std::lock_guard<std::mutex> lock(m_mtx);
             m_queue.push(std::make_tuple(std::forward<UArgs>(args)...));
-            m_cv.Fire();
+            m_cv.notify_one();
         }
     }
 
@@ -125,7 +120,7 @@ public:
 
     size_t QueueSize()
     {
-        Lock lock(m_mtx);
+        std::lock_guard<std::mutex> lock(m_mtx);
         return m_queue.size();
     }
 
@@ -152,43 +147,37 @@ protected:
         ExecuteTask(args, MakeIndexSequence<sizeof...(Args)>{});
     }
 
-    static void* WorkerThread(void* arg)
+    void WorkerThread()
     {
-        ThreadPool* pool = static_cast<ThreadPool*>(arg);
-        while (pool->m_running)
+        while (m_running)
         {
             ArgsTuple args;
             bool      has_task = false;
             {
-                Lock lock(pool->m_mtx);
-                if (pool->m_queue.empty())
+                std::unique_lock<std::mutex> lock(m_mtx);
+                if (m_queue.empty())
                 {
-                    if(pool->m_cv.WaitTimeout(pool->m_mtx, pool->m_timeoutMs) == false)
-                    {
-                        continue;
-                    }
+                    m_cv.wait_for(lock, std::chrono::milliseconds(m_timeoutMs));
                 }
-
-                if (!pool->m_queue.empty())
+                if (!m_queue.empty())
                 {
-                    args     = std::move(pool->m_queue.front());
+                    args     = std::move(m_queue.front());
                     has_task = true;
-                    pool->m_queue.pop();
+                    m_queue.pop();
                 }
             }
             if (has_task)
             {
-                pool->Execute(args);
+                Execute(args);
             }
         }
-        return nullptr;
     }
 
 private:
-    std::vector<pthread_t> m_workers;
-    std::queue<ArgsTuple>  m_queue;
-    Mutex                  m_mtx;
-    Signal                 m_cv;
+    std::vector<std::thread> m_workers;
+    std::queue<ArgsTuple>   m_queue;
+    std::mutex              m_mtx;
+    std::condition_variable m_cv;
     Task                   m_task;
     std::atomic<bool>      m_running;
     size_t                 m_threadCount;

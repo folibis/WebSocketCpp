@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
 
     signal(SIGINT, handle_sigint);
 
-    WebSocketCpp::DebugPrint::AllowPrint = true;
+    //WebSocketCpp::DebugPrint::AllowPrint = true;
     WebSocketCpp::WebSocketServer wsServer;
     wsServerPtr = &wsServer;
 

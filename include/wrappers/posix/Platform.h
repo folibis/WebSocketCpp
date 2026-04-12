@@ -23,7 +23,7 @@
 #ifndef WEB_SOCKET_CPP_PLATFORM_H
 #define WEB_SOCKET_CPP_PLATFORM_H
 
-#include <inttypes.h>
+#include <cstdint>
 
 namespace WebSocketCpp
 {

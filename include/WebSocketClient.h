@@ -21,8 +21,10 @@
 #ifndef WEBSOCKETCLIENT_H
 #define WEBSOCKETCLIENT_H
 
+#include <condition_variable>
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <string>
 
 #include "CommunicationClientBase.h"
@@ -65,12 +67,19 @@ public:
     bool SendBinary(const std::string& data);
     bool SendPing();
 
-    void SetOnConnect(const std::function<void(bool)>& callback);
-    void SetOnClose(const std::function<void(void)>& callback);
-    void SetOnError(const std::function<void(const std::string&)>& callback);
-    void SetOnMessage(const std::function<void(ResponseWebSocket&)>& callback);
-    void SetProgressCallback(const std::function<void(size_t, size_t)>& callback);
-    void SetOnStateChanged(const std::function<void(State)>& callback);
+    using OnConnectCallback      = std::function<void(bool)>;
+    using OnCloseCallback        = std::function<void()>;
+    using OnErrorCallback        = std::function<void(const std::string&)>;
+    using OnMessageCallback      = std::function<void(ResponseWebSocket&)>;
+    using ProgressCallback       = std::function<void(size_t, size_t)>;
+    using OnStateChangedCallback = std::function<void(State)>;
+
+    void SetOnConnect(OnConnectCallback callback);
+    void SetOnClose(OnCloseCallback callback);
+    void SetOnError(OnErrorCallback callback);
+    void SetOnMessage(OnMessageCallback callback);
+    void SetProgressCallback(ProgressCallback callback);
+    void SetOnStateChanged(OnStateChangedCallback callback);
 
 protected:
     void OnDataReady(ByteArray&& data);
@@ -81,18 +90,19 @@ protected:
 private:
     std::shared_ptr<CommunicationClientBase> m_connection = nullptr;
     Config&                                  m_config;
-    std::function<void(bool)>                m_connectCallback  = nullptr;
-    std::function<void(void)>                m_closeCallback    = nullptr;
-    std::function<void(const std::string&)>  m_errorCallback    = nullptr;
-    std::function<void(ResponseWebSocket&)>  m_messageCallback  = nullptr;
-    std::function<void(size_t, size_t)>      m_progressCallback = nullptr;
-    std::function<void(State)>               m_stateCallback    = nullptr;
+    OnConnectCallback      m_connectCallback  = nullptr;
+    OnCloseCallback        m_closeCallback    = nullptr;
+    OnErrorCallback        m_errorCallback    = nullptr;
+    OnMessageCallback      m_messageCallback  = nullptr;
+    ProgressCallback       m_progressCallback = nullptr;
+    OnStateChangedCallback m_stateCallback    = nullptr;
     State                                    m_state            = State::Undefined;
     std::string                              m_key;
     ByteArray                                m_data;
-    Mutex                                    m_connect_mtx;
-    Signal                                   m_connect_cv;
-    Mutex                                    m_read_mtx;
+    std::mutex                               m_handshake_mtx;
+    std::condition_variable                  m_handshake_cv;
+    bool                                     m_handshake_done{false};
+    std::mutex                               m_read_mtx;
 };
 
 } // namespace WebSocketCpp

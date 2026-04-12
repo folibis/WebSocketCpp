@@ -49,7 +49,7 @@ bool Response::AddFile(const std::string& file, const std::string& charset)
 
     if (FileSystem::IsFileExist(file) == false)
     {
-        std::string root = FileSystem::NormalizePath(m_config.GetRoot());
+        std::string root = FileSystem::NormalizePath(FileSystem::TempFolder());
         path             = root + file;
     }
     else

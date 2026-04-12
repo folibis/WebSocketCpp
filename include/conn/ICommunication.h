@@ -31,38 +31,12 @@ namespace WebSocketCpp
 class ICommunication : public IErrorable, public IRunnable
 {
 public:
-    virtual bool Connect(const std::string& host = "", int port = 0) = 0;
-
-    inline virtual void SetPort(int)
-    {
-    }
-
-    inline virtual int GetPort() const
-    {
-        return 0;
-    }
-
-    inline virtual void SetHost(const std::string&)
-    {
-    }
-
-    inline virtual std::string GetHost() const
-    {
-        return std::string();
-    }
-
-    inline void setConnected(bool connected)
-    {
-        m_connected = connected;
-    }
-
-    inline bool IsConnected() const
-    {
-        return m_connected;
-    }
-
-private:
-    bool m_connected = false;
+    virtual bool        Connect(const std::string& host = "", int port = 0) = 0;
+    virtual void        SetPort(int port)                                   = 0;
+    virtual int         GetPort() const                                     = 0;
+    virtual void        SetHost(const std::string& host)                    = 0;
+    virtual std::string GetHost() const                                     = 0;
+    virtual bool        IsConnected() const                                 = 0;
 };
 
 } // namespace WebSocketCpp

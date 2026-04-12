@@ -49,6 +49,7 @@ public:
     void        SetMessageType(MessageType type);
 
     const ByteArray& GetData() const;
+    size_t           GetSize() const;
 
     bool Send(CommunicationServerBase* communication) const;
     bool Parse(const ByteArray& data);
@@ -57,6 +58,7 @@ private:
     int         m_connID = (-1);
     ByteArray   m_data;
     MessageType m_messageType = MessageType::Undefined;
+    size_t      m_size        = 0;
 };
 
 } // namespace WebSocketCpp

@@ -23,9 +23,8 @@
 #ifndef WEB_SOCKET_CPP_THREAD_WORKER_H
 #define WEB_SOCKET_CPP_THREAD_WORKER_H
 
-#include <pthread.h>
-
 #include <functional>
+#include <thread>
 
 #include "IErrorable.h"
 
@@ -44,18 +43,17 @@ public:
     bool Start();
     void Stop(bool wait = true);
     void StopNoWait();
-    void Wait() const;
+    void Wait();
     bool IsRunning() const
     {
         return m_isRunning;
     }
 
 protected:
-    static void* StartThread(void* cls);
-    void         SetStop();
+    void SetStop();
 
 private:
-    pthread_t                          m_thread{};
+    std::thread                        m_thread;
     std::function<ThreadRoutine>       m_func       = nullptr;
     std::function<ThreadFinishRoutine> m_funcFinish = nullptr;
     bool                               m_isRunning  = false;

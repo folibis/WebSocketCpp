@@ -26,10 +26,7 @@ namespace WebSocketCpp
 class IRunnable
 {
 public:
-    virtual bool Init()
-    {
-        return false;
-    }
+    virtual bool Init()                  = 0;
     virtual bool Run()                   = 0;
     virtual bool Close(bool wait = true) = 0;
     virtual bool WaitFor()               = 0;

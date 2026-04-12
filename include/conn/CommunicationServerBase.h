@@ -21,18 +21,9 @@
 #define WEB_SOCKET_CPP_ICOMMUNICATION_SERVER_H
 
 #include <functional>
-#include <memory>
 
 #include "ICommunication.h"
-#include "Mutex.h"
-#include "SocketPool.h"
-#include "ThreadPool.h"
-#include "ThreadWorker.h"
 #include "common.h"
-
-#define MAX_CLIENTS      10
-#define QUEUE_SIZE       10
-#define READ_BUFFER_SIZE 1024
 
 namespace WebSocketCpp
 {
@@ -40,55 +31,33 @@ namespace WebSocketCpp
 class CommunicationServerBase : public ICommunication
 {
 public:
-    CommunicationServerBase(
-        size_t              max_client_count,
-        SocketPool::Domain  domain,
-        SocketPool::Type    type,
-        SocketPool::Options options);
+    virtual ~CommunicationServerBase() = default;
 
-    void        SetPort(int port) override;
-    int         GetPort() const override;
-    void        SetHost(const std::string& host) override;
-    std::string GetHost() const override;
+    using NewConnectionCallback   = std::function<void(int, const std::string&)>;
+    using DataReadyCallback       = std::function<void(int, ByteArray)>;
+    using CloseConnectionCallback = std::function<void(int)>;
 
-    virtual bool CloseConnection(int connID);
-    virtual bool Write(int connID, ByteArray& data);
-    virtual bool Write(int connID, ByteArray& data, size_t size);
-    virtual bool Init() override;
-    virtual bool Connect(const std::string& host = "", int port = 0) override;
-    bool         Close(bool wait = true) override;
-    bool         Run() override;
-    bool         WaitFor() override;
+    virtual bool Write(int connID, ByteArray& data)              = 0;
+    virtual bool Write(int connID, ByteArray& data, size_t size) = 0;
+    virtual bool CloseConnection(int connID)                     = 0;
 
-    virtual bool SetNewConnectionCallback(const std::function<void(int, const std::string&)>& callback)
+    virtual bool SetNewConnectionCallback(NewConnectionCallback callback)   = 0;
+    virtual bool SetDataReadyCallback(DataReadyCallback callback)           = 0;
+    virtual bool SetCloseConnectionCallback(CloseConnectionCallback callback) = 0;
+
+    bool IsConnected() const override
     {
-        m_newConnectionCallback = callback;
-        return true;
-    };
-    virtual bool SetDataReadyCallback(const std::function<void(int, ByteArray data)>& callback)
-    {
-        m_dataReadyCallback = callback;
-        return true;
-    };
-    virtual bool SetCloseConnectionCallback(const std::function<void(int)>& callback)
-    {
-        m_closeConnectionCallback = callback;
-        return true;
-    };
+        return m_connected;
+    }
 
 protected:
-    virtual void                            CloseConnections();
-    SocketPool                              m_sockets;
-    Mutex                                   m_writeMutex;
-    void*                                   ReadThread(bool& running);
-    ThreadWorker                            m_readThread;
-    std::vector<ByteArray>                  m_readBuffer;
-    ThreadPool<int, const uint8_t*, size_t> m_processThreadPool;
+    void setConnected(bool connected)
+    {
+        m_connected = connected;
+    }
 
-    void                                         processTask(int clientID, const uint8_t* data, size_t size);
-    std::function<void(int, const std::string&)> m_newConnectionCallback   = nullptr;
-    std::function<void(int, ByteArray data)>     m_dataReadyCallback       = nullptr;
-    std::function<void(int)>                     m_closeConnectionCallback = nullptr;
+private:
+    bool m_connected = false;
 };
 
 } // namespace WebSocketCpp
