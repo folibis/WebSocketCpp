@@ -21,7 +21,7 @@ Requirements/dependencies:
 
 ### Usage: ###
 
-**WebSocker server**
+**WebSocket server**
 ```cpp
 WebSocketCpp::WebSocketServer wsServer;
 
@@ -93,7 +93,7 @@ server.OnMessage("/(user|users)/{user:alpha}/[{action:string}/]", [&](const WebS
         action = "Hello!";
     }
 
-    server.WriteText(std::string("<h2>") + user + ", " + action + "</h2>");
+    response.WriteText(std::string("<h2>") + user + ", " + action + "</h2>");
     server.SendResponse(response);
 
     return true;
