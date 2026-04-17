@@ -1,0 +1,177 @@
+<html>
+    <head>
+	<title>Tic-Tac-Toe</title>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <meta http-equiv="expires" content="0">
+	<link rel="stylesheet" href="style.css" type="text/css" />
+    <style>
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 90px);
+            grid-template-rows: repeat(3, 90px);
+            gap: 5px;
+            margin: 10px auto;
+            width: fit-content;
+            padding: 0;
+        }
+        .box .cell {
+            width: 90px;
+            height: 90px;
+            padding: 0;
+            box-sizing: border-box;
+            background: #fff;
+            border: 2px solid #aaa;
+            border-radius: 4px;
+            font-size: 52px;
+            font-weight: bold;
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        .box .cell:hover:not(.taken) { background: #f5f5f5; }
+        .box .cell.taken { cursor: default; }
+        .box .cell.X { color: #2980b9; }
+        .box .cell.O { color: #c0392b; }
+        .box .cell.win { background: #abebc6; }
+    </style>
+    </head>
+    <body>
+	<h3 style="text-align: center;margin-top:50px;">Tic-Tac-Toe</h3>
+    <div class="box">
+    	<p>Open this page in two browser tabs to play against each other</p>
+    	<div id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+    	</div>
+    	<div class='center'><button id="restart" disabled>Restart</button></div>
+    	<div id="result_box"></div>
+    	<div id="status_box"></div>
+    </div>
+    </body>
+    <script>
+
+    	var socket = new WebSocket("ws://127.0.0.1:8080/tictactoe");
+    	var myMark = null;
+    	var currentTurn = null;
+    	var gameOver = false;
+    	var cells = document.querySelectorAll('.cell');
+    	var restartBtn = document.getElementById('restart');
+
+    	socket.onopen = function() {
+    		setStatus("Connected");
+    		socket.send("join");
+    	};
+
+    	socket.onclose = function() {
+    		setStatus("Disconnected");
+    	};
+
+    	socket.onerror = function() {
+    		setStatus("Connection error");
+    	};
+
+    	socket.onmessage = function(event) {
+    		var msg = JSON.parse(event.data);
+    		switch (msg.event) {
+    			case 'wait':
+    				myMark = null;
+    				gameOver = false;
+    				restartBtn.disabled = true;
+    				clearBoard();
+    				setResult('');
+    				setStatus("Waiting for opponent...");
+    				break;
+    			case 'full':
+    				setStatus("Game is full - try again later");
+    				break;
+    			case 'start':
+    				myMark = msg.mark;
+    				gameOver = false;
+    				currentTurn = msg.turn;
+    				restartBtn.disabled = false;
+    				updateBoard(msg.board, null);
+    				setResult('You are: <b>' + myMark + '</b>');
+    				setTurnStatus();
+    				break;
+    			case 'move':
+    				currentTurn = msg.turn;
+    				updateBoard(msg.board, null);
+    				setTurnStatus();
+    				break;
+    			case 'gameover':
+    				gameOver = true;
+    				updateBoard(msg.board, msg.winner || null);
+    				if (msg.result === 'draw') {
+    					setResult("It's a draw!");
+    				} else {
+    					setResult(msg.winner === myMark ? 'You win!' : 'You lose.');
+    				}
+    				setStatus('Game over - click Restart to play again');
+    				break;
+    			case 'reset':
+    				myMark = null;
+    				gameOver = false;
+    				restartBtn.disabled = true;
+    				clearBoard();
+    				setResult('');
+    				setStatus("Opponent disconnected. Waiting for new player...");
+    				break;
+    		}
+    	};
+
+    	cells.forEach(function(cell) {
+    		cell.addEventListener('click', function() {
+    			if (gameOver || myMark === null || currentTurn !== myMark) return;
+    			if (cell.classList.contains('taken')) return;
+    			socket.send("move:" + cell.getAttribute('data-index'));
+    		});
+    	});
+
+    	restartBtn.addEventListener('click', function() {
+    		socket.send("restart");
+    	});
+
+    	function updateBoard(board, winner) {
+    		var winLine = winner ? getWinLine(board, winner) : [];
+    		cells.forEach(function(cell, i) {
+    			var mark = board[i];
+    			cell.textContent = mark === '.' ? '' : mark;
+    			cell.className = 'cell' + (mark !== '.' ? ' ' + mark + ' taken' : '');
+    			if (winLine.indexOf(i) !== -1) cell.classList.add('win');
+    		});
+    	}
+
+    	function getWinLine(board, winner) {
+    		var lines = [[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    		for (var i = 0; i < lines.length; i++) {
+    			var l = lines[i];
+    			if (board[l[0]] === winner && board[l[1]] === winner && board[l[2]] === winner)
+    				return l;
+    		}
+    		return [];
+    	}
+
+    	function clearBoard() {
+    		cells.forEach(function(cell) { cell.textContent = ''; cell.className = 'cell'; });
+    	}
+
+    	function setTurnStatus() {
+    		setStatus(currentTurn === myMark ? 'Your turn' : "Opponent's turn");
+    	}
+
+    	function setStatus(str) { document.getElementById('status_box').innerHTML = str; }
+    	function setResult(str) { document.getElementById('result_box').innerHTML = str; }
+
+    </script>
+<html>
