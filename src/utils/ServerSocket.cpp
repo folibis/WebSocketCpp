@@ -21,8 +21,6 @@
 namespace WebSocketCpp
 {
 
-constexpr size_t ServerSocket::MAX_EVENT_COUNT;
-
 ServerSocket::ServerSocket(size_t client_count)
     : m_client_count(client_count),
       m_memory_pool(m_client_count * BUFFER_SIZE * 2)
@@ -315,7 +313,7 @@ void ServerSocket::ProcessTask()
 
     while (m_process_running)
     {
-        int32_t n = epoll_wait(m_epoll_fd, events, std::min(m_client_count, MAX_EVENT_COUNT), PROCESS_TIMEOUT_MS);
+        int32_t n = epoll_wait(m_epoll_fd, events, m_client_count < MAX_EVENT_COUNT ? m_client_count : MAX_EVENT_COUNT, PROCESS_TIMEOUT_MS);
         for (int32_t i = 0; i < n; i++)
         {
             if (events[i].data.u32 == UINT32_MAX)

@@ -60,8 +60,6 @@ TEST(MemoryPool, PointersAreInsideBuffer) {
     pool.free(b);
 }
 
-// ─── Free and reuse ──────────────────────────────────────────────────────────
-
 TEST(MemoryPool, FreeNullIsNoOp) {
     MemoryPool pool(64);
     EXPECT_NO_THROW(pool.free(nullptr));
@@ -115,8 +113,6 @@ TEST(MemoryPool, FullBufferAfterAllFrees) {
     pool.free(full);
 }
 
-// ─── Buffer is writable ──────────────────────────────────────────────────────
-
 TEST(MemoryPool, AllocatedMemoryIsWritable) {
     MemoryPool pool(256);
     uint8_t* p = pool.allocate(256);
@@ -140,8 +136,6 @@ TEST(MemoryPool, AllocationsDoNotOverlap) {
     pool.free(a);
     pool.free(b);
 }
-
-// ─── Thread safety ───────────────────────────────────────────────────────────
 
 TEST(MemoryPool, ConcurrentAllocateFree) {
     const int NUM_THREADS    = 8;

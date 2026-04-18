@@ -1,21 +1,15 @@
 #include <gtest/gtest.h>
+
 #include "Url.h"
 
 using namespace WebSocketCpp;
 
-// ─────────────────────────────────────────────────────────────
-// Fixture
-// ─────────────────────────────────────────────────────────────
 class UrlTest : public ::testing::Test
 {
 protected:
     Url url;
 };
 
-
-// ─────────────────────────────────────────────────────────────
-// Construction & default state
-// ─────────────────────────────────────────────────────────────
 TEST_F(UrlTest, DefaultConstructor_IsNotInitialized)
 {
     EXPECT_FALSE(url.IsInitiaized());
@@ -34,10 +28,6 @@ TEST_F(UrlTest, ConstructFromString_ParsesCorrectly)
     EXPECT_EQ(u.GetHost(), "example.com");
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Scheme parsing
-// ─────────────────────────────────────────────────────────────
 TEST_F(UrlTest, Parse_SchemeWS)
 {
     EXPECT_TRUE(url.Parse("ws://example.com/path"));
@@ -79,10 +69,6 @@ TEST_F(UrlTest, Parse_NoScheme_ReturnsFalse)
     EXPECT_FALSE(url.Parse("example.com/path"));
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Default ports
-// ─────────────────────────────────────────────────────────────
 TEST_F(UrlTest, Parse_DefaultPortForWS)
 {
     url.Parse("ws://example.com/path");
@@ -118,10 +104,6 @@ TEST_F(UrlTest, Parse_NonNumericPort_ReturnsFalse)
     EXPECT_FALSE(url.Parse("ws://example.com:abc/path"));
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Host parsing
-// ─────────────────────────────────────────────────────────────
 TEST_F(UrlTest, Parse_SimpleHost)
 {
     url.Parse("ws://example.com/path");
@@ -151,10 +133,6 @@ TEST_F(UrlTest, Parse_FullUrlWithPort)
     EXPECT_EQ(url.GetFragment(), "fragment");
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// User info
-// ─────────────────────────────────────────────────────────────
 TEST_F(UrlTest, Parse_UserInAuthority)
 {
     url.Parse("ws://alice@example.com/path");
@@ -168,14 +146,9 @@ TEST_F(UrlTest, Parse_NoUser_UserIsEmpty)
     EXPECT_TRUE(url.GetUser().empty());
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Path parsing
-// ─────────────────────────────────────────────────────────────
 TEST_F(UrlTest, Parse_SimplePath)
 {
     url.Parse("ws://example.com/chat/room");
-    // Accept either with or without leading slash depending on implementation
     EXPECT_NE(url.GetPath().find("chat/room"), std::string::npos);
 }
 
@@ -199,10 +172,6 @@ TEST_F(UrlTest, GetNormalizedPath_DoesNotDoubleSlash)
     EXPECT_NE(norm.substr(0, 2), "//");
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Query string
-// ─────────────────────────────────────────────────────────────
 TEST_F(UrlTest, Parse_SingleQueryParam)
 {
     url.Parse("ws://example.com/path?key=value");
@@ -251,10 +220,6 @@ TEST_F(UrlTest, SetQueryValue_OverwritesExisting)
     EXPECT_EQ(url.GetQueryValue("key"), "new");
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Fragment
-// ─────────────────────────────────────────────────────────────
 TEST_F(UrlTest, Parse_FragmentWithQuery)
 {
     url.Parse("ws://example.com/path?key=val#section1");
@@ -265,7 +230,7 @@ TEST_F(UrlTest, Parse_FragmentWithQuery)
 TEST_F(UrlTest, Parse_FragmentWithoutQuery)
 {
     url.Parse("ws://example.com/path#section1");
-    EXPECT_EQ(url.GetFragment(), "section1"); // currently fails — path swallows it
+    EXPECT_EQ(url.GetFragment(), "section1");
 }
 
 TEST_F(UrlTest, Parse_NoFragment_FragmentIsEmpty)
@@ -274,10 +239,6 @@ TEST_F(UrlTest, Parse_NoFragment_FragmentIsEmpty)
     EXPECT_TRUE(url.GetFragment().empty());
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// ToString round-trip
-// ─────────────────────────────────────────────────────────────
 TEST_F(UrlTest, ToString_Full_ReconstructsSchemeAndHost)
 {
     url.Parse("ws://example.com/chat");
@@ -334,10 +295,6 @@ TEST_F(UrlTest, ToString_User_CorrectFormat)
     EXPECT_NE(result.find("alice@example.com"), std::string::npos);
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Setters & mutability
-// ─────────────────────────────────────────────────────────────
 TEST_F(UrlTest, SetScheme_UpdatesScheme)
 {
     url.Parse("ws://example.com/path");
@@ -373,10 +330,6 @@ TEST_F(UrlTest, SetFragment_UpdatesFragment)
     EXPECT_EQ(url.GetFragment(), "anchor");
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Clear
-// ─────────────────────────────────────────────────────────────
 TEST_F(UrlTest, Clear_ResetsAllFields)
 {
     url.Parse("wss://alice@example.com:9000/path?k=v#frag");
@@ -400,10 +353,6 @@ TEST_F(UrlTest, Clear_ThenReParse_Works)
     EXPECT_EQ(url.GetHost(), "other.com");
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// GetOriginalSize
-// ─────────────────────────────────────────────────────────────
 TEST_F(UrlTest, GetOriginalSize_MatchesInputLength)
 {
     std::string input = "ws://example.com/path?key=val";
@@ -411,10 +360,6 @@ TEST_F(UrlTest, GetOriginalSize_MatchesInputLength)
     EXPECT_EQ(url.GetOriginalSize(), input.size());
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Edge cases
-// ─────────────────────────────────────────────────────────────
 TEST_F(UrlTest, Parse_EmptyString_ReturnsFalse)
 {
     EXPECT_FALSE(url.Parse(""));

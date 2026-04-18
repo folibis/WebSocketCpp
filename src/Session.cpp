@@ -10,7 +10,7 @@ constexpr uint64_t Session::DEFAULT_WAIT_TIMEOUT_MS;
 Session::Session(IDataHandler* handler, MemoryPool* pool)
     : m_handler(handler), m_pool(pool)
 {
-    m_thread.SetFunction([this](bool& running) -> void* {
+    m_thread.SetFunction([this](std::atomic<bool>& running) -> void* {
         return Task(running);
     });
 }
@@ -67,7 +67,7 @@ uint8_t* Session::getData(size_t size)
     return m_pool->allocate(size);
 }
 
-void* Session::Task(bool& running)
+void* Session::Task(std::atomic<bool>& running)
 {
     while (running)
     {

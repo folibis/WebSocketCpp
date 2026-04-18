@@ -32,6 +32,11 @@ ClientSocket::~ClientSocket()
     {
         m_read_thread.join();
     }
+    if (m_fd >= 0)
+    {
+        close(m_fd);
+        m_fd = -1;
+    }
     FreeSsl();
 }
 
@@ -129,7 +134,6 @@ bool ClientSocket::Connect(const std::string& host, int32_t port)
         return false;
     }
 
-
 #ifdef WITH_OPENSSL
     if (!m_cert.empty() || !m_key.empty())
     {
@@ -219,7 +223,15 @@ bool ClientSocket::Run()
 bool ClientSocket::Close(bool wait)
 {
     Shutdown();
-    WaitFor();
+    if (wait)
+    {
+        WaitFor();
+        if (m_fd >= 0)
+        {
+            close(m_fd);
+            m_fd = -1;
+        }
+    }
     FreeSsl();
     return true;
 }
@@ -240,9 +252,7 @@ void ClientSocket::Shutdown()
 
     if (m_fd >= 0)
     {
-        epoll_ctl(m_epoll_fd, EPOLL_CTL_DEL, m_fd, nullptr);
-        close(m_fd);
-        m_fd = -1;
+        shutdown(m_fd, SHUT_RDWR);
     }
 }
 
@@ -296,10 +306,11 @@ bool ClientSocket::Write(const uint8_t* data, size_t size)
     }
 #endif
 
-    size_t total = 0;
+    size_t  total  = 0;
+    int32_t cur_fd = m_fd;
     while (total < size)
     {
-        ssize_t sent = send(m_fd, data + total, size - total, MSG_NOSIGNAL);
+        ssize_t sent = send(cur_fd, data + total, size - total, MSG_NOSIGNAL);
         if (sent < 0)
         {
             if (errno == EAGAIN || errno == EWOULDBLOCK)

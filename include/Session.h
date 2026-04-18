@@ -23,6 +23,7 @@
 #ifndef WEB_SOCKET_CPP_SESSION_H
 #define WEB_SOCKET_CPP_SESSION_H
 
+#include <atomic>
 #include <condition_variable>
 #include <cstddef>
 #include <cstdint>
@@ -55,7 +56,7 @@ public:
     uint8_t* getData(size_t size);
 
 protected:
-    void* Task(bool& running);
+    void* Task(std::atomic<bool>& running);
 
 private:
     using ArgsTuple = std::tuple<int, const uint8_t*, size_t>;

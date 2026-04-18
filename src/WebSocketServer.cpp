@@ -231,7 +231,7 @@ bool WebSocketServer::StopRequestThread()
     return true;
 }
 
-void* WebSocketServer::RequestThread(bool& running)
+void* WebSocketServer::RequestThread(std::atomic<bool>& running)
 {
     while (m_requestThread.IsRunning())
     {
@@ -401,6 +401,7 @@ void WebSocketServer::ProcessRequests()
 
 bool WebSocketServer::HasData()
 {
+    std::lock_guard<std::mutex> lock(m_queueMutex);
     for (auto& entry : m_requestQueue)
     {
         if (!entry.data.empty() || entry.readyForDispatch)

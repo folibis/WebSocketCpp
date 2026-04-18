@@ -69,14 +69,14 @@ private:
     static constexpr int    EPOLL_TIMEOUT_MS   = 500;
     static constexpr int    CONNECT_TIMEOUT_MS = 5000;
 
-    int32_t            m_fd{-1};
-    int32_t            m_epoll_fd{-1};
-    std::thread        m_read_thread;
-    std::atomic<bool>  m_read_running{false};
-    std::atomic<bool>  m_connected{false};
-    OnDataCallback     m_data_callback;
-    OnCloseCallback    m_close_callback;
-    std::mutex         m_write_mutex;
+    int32_t           m_fd{-1};
+    int32_t           m_epoll_fd{-1};
+    std::thread       m_read_thread;
+    std::atomic<bool> m_read_running{false};
+    std::atomic<bool> m_connected{false};
+    OnDataCallback    m_data_callback;
+    OnCloseCallback   m_close_callback;
+    std::mutex        m_write_mutex;
 
 #ifdef WITH_OPENSSL
     std::string m_cert;

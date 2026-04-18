@@ -68,7 +68,7 @@ public:
     static std::map<std::string, std::string> ParseParamString(const std::string& str, size_t start = 0);
 
 private:
-    static std::mt19937 m_rng;
+    static thread_local std::mt19937 m_rng;
 };
 
 #endif // WEB_SOCKET_CPP_STRINGUTIL_H

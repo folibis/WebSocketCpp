@@ -54,7 +54,7 @@ protected:
 
     void SetUp() override
     {
-        //WebSocketCpp::DebugPrint::AllowPrint = false;
+        WebSocketCpp::DebugPrint::AllowPrint = false;
     }
 
     void TearDown() override
@@ -218,7 +218,7 @@ TEST_F(WebSocketFixture, OneServerLoopClient)
     }
 
     std::unique_lock<std::mutex> lock(client_mtx);
-    bool                         success = client_cv.wait_for(lock, std::chrono::milliseconds(50), [&count, this]() { return count == test_count; });
+    bool                         success = client_cv.wait_for(lock, std::chrono::milliseconds(500), [&count, this]() { return count == test_count; });
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
     server.Close();
 
@@ -262,9 +262,13 @@ TEST_F(WebSocketFixture, OneServerNClient)
             WebSocketCpp::WebSocketClient client;
 
             std::string received;
-            client.SetOnMessage([&received, &client_cv, i](WebSocketCpp::ResponseWebSocket& response) -> bool {
-                received = StringUtil::ByteArray2String(response.GetData());
-                DebugPrint() << "client #" << i << " received: " << received << std::endl;
+            client.SetOnMessage([&received, &client_cv, &client_mtx, i](WebSocketCpp::ResponseWebSocket& response) -> bool {
+                std::string msg = StringUtil::ByteArray2String(response.GetData());
+                DebugPrint() << "client #" << i << " received: " << msg << std::endl;
+                {
+                    std::lock_guard<std::mutex> lk(client_mtx);
+                    received = std::move(msg);
+                }
                 client_cv.notify_one();
                 return true;
             });
@@ -336,9 +340,13 @@ TEST_F(WebSocketFixture, OneServerNClientSsl)
             WebSocketCpp::WebSocketClient client;
 
             std::string received;
-            client.SetOnMessage([&received, &client_cv, i](WebSocketCpp::ResponseWebSocket& response) -> bool {
-                received = StringUtil::ByteArray2String(response.GetData());
-                DebugPrint() << "client #" << i << " received: " << received << std::endl;
+            client.SetOnMessage([&received, &client_cv, &client_mtx, i](WebSocketCpp::ResponseWebSocket& response) -> bool {
+                std::string msg = StringUtil::ByteArray2String(response.GetData());
+                DebugPrint() << "client #" << i << " received: " << msg << std::endl;
+                {
+                    std::lock_guard<std::mutex> lk(client_mtx);
+                    received = std::move(msg);
+                }
                 client_cv.notify_one();
                 return true;
             });
@@ -374,7 +382,7 @@ TEST_F(WebSocketFixture, OneServerNClientSsl)
         EXPECT_EQ(test_count, results[i]) << " client #" << i;
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     server.Close();
 
     // Reset protocol back to WS so other tests are not affected

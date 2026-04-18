@@ -21,6 +21,7 @@
 #ifndef WEBSOCKETCLIENT_H
 #define WEBSOCKETCLIENT_H
 
+#include <atomic>
 #include <condition_variable>
 #include <functional>
 #include <memory>
@@ -90,13 +91,13 @@ protected:
 private:
     std::shared_ptr<CommunicationClientBase> m_connection = nullptr;
     Config&                                  m_config;
-    OnConnectCallback      m_connectCallback  = nullptr;
-    OnCloseCallback        m_closeCallback    = nullptr;
-    OnErrorCallback        m_errorCallback    = nullptr;
-    OnMessageCallback      m_messageCallback  = nullptr;
-    ProgressCallback       m_progressCallback = nullptr;
-    OnStateChangedCallback m_stateCallback    = nullptr;
-    State                                    m_state            = State::Undefined;
+    OnConnectCallback                        m_connectCallback  = nullptr;
+    OnCloseCallback                          m_closeCallback    = nullptr;
+    OnErrorCallback                          m_errorCallback    = nullptr;
+    OnMessageCallback                        m_messageCallback  = nullptr;
+    ProgressCallback                         m_progressCallback = nullptr;
+    OnStateChangedCallback                   m_stateCallback    = nullptr;
+    std::atomic<State>                       m_state{State::Undefined};
     std::string                              m_key;
     ByteArray                                m_data;
     std::mutex                               m_handshake_mtx;

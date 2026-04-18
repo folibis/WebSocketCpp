@@ -23,6 +23,7 @@
 #ifndef WEB_SOCKET_CPP_THREAD_WORKER_H
 #define WEB_SOCKET_CPP_THREAD_WORKER_H
 
+#include <atomic>
 #include <functional>
 #include <thread>
 
@@ -34,7 +35,7 @@ namespace WebSocketCpp
 class ThreadWorker : public IErrorable
 {
 public:
-    using ThreadRoutine       = void*(bool&);
+    using ThreadRoutine       = void*(std::atomic<bool>&);
     using ThreadFinishRoutine = void(void*);
     ThreadWorker();
     ~ThreadWorker();
@@ -56,7 +57,7 @@ private:
     std::thread                        m_thread;
     std::function<ThreadRoutine>       m_func       = nullptr;
     std::function<ThreadFinishRoutine> m_funcFinish = nullptr;
-    bool                               m_isRunning  = false;
+    std::atomic<bool>                  m_isRunning{false};
 };
 
 } // namespace WebSocketCpp

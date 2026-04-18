@@ -8,7 +8,7 @@
 
 using namespace WebSocketCpp;
 
-std::mt19937 StringUtil::m_rng;
+thread_local std::mt19937 StringUtil::m_rng;
 
 size_t StringUtil::SearchPosition(const ByteArray& str, const ByteArray& substring, size_t start, size_t end)
 {

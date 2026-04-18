@@ -56,7 +56,7 @@ int main(int argc, char* argv[])
     WebSocketCpp::WebSocketServer wsServer;
     wsServerPtr = &wsServer;
     WebSocketCpp::ThreadWorker task;
-    task.SetFunction([&](bool& running) -> void* {
+    task.SetFunction([&](std::atomic<bool>& running) -> void* {
         WebSocketCpp::ResponseWebSocket response(connID);
         StringUtil::RandInit();
         while (running)

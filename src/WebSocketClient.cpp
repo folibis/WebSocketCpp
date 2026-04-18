@@ -70,6 +70,8 @@ bool WebSocketClient::Open(Request& request)
         SetState(State::Connected);
     }
 
+    m_key = Data::Base64Encode(StringUtil::GenerateRandomString(16));
+
     if (m_connection->Run() == false)
     {
         SetLastError("read routine failed: " + m_connection->GetLastError());
@@ -81,7 +83,6 @@ bool WebSocketClient::Open(Request& request)
     header.SetHeader(Header::HeaderType::Host, request.GetUrl().GetHost());
     header.SetHeader(Header::HeaderType::Upgrade, "websocket");
     header.SetHeader(Header::HeaderType::Connection, "Upgrade");
-    m_key = Data::Base64Encode(StringUtil::GenerateRandomString(16));
     header.SetHeader("Sec-WebSocket-Key", m_key);
     header.SetHeader("Sec-WebSocket-Version", WS_VERSION);
 

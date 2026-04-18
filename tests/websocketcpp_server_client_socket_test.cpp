@@ -26,10 +26,6 @@
 
 using namespace WebSocketCpp;
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
 static int FindFreePort()
 {
     int fd = ::socket(AF_INET, SOCK_STREAM, 0);
@@ -49,7 +45,6 @@ static int FindFreePort()
     return port;
 }
 
-// Wait up to timeout_ms for pred to become true, notified via cv.
 template<typename Pred>
 static bool WaitFor(std::mutex& mtx, std::condition_variable& cv,
                     Pred pred, int timeout_ms = 2000)
@@ -58,12 +53,8 @@ static bool WaitFor(std::mutex& mtx, std::condition_variable& cv,
     return cv.wait_for(lock, std::chrono::milliseconds(timeout_ms), pred);
 }
 
-// Small delay to let async events propagate.
 static void Yield() { std::this_thread::sleep_for(std::chrono::milliseconds(50)); }
 
-// ---------------------------------------------------------------------------
-// ServerSocket — unit tests
-// ---------------------------------------------------------------------------
 
 TEST(ServerSocketUnit, RunWithoutPortFails)
 {
@@ -106,10 +97,6 @@ TEST(ServerSocketUnit, WriteInvalidIndexFails)
     server.Close(true);
 }
 
-// ---------------------------------------------------------------------------
-// ClientSocket — unit tests
-// ---------------------------------------------------------------------------
-
 TEST(ClientSocketUnit, RunBeforeConnectFails)
 {
     ClientSocket client;
@@ -120,7 +107,7 @@ TEST(ClientSocketUnit, RunBeforeConnectFails)
 
 TEST(ClientSocketUnit, ConnectToClosedPortFails)
 {
-    int port = FindFreePort(); // nothing listening
+    int port = FindFreePort();
     ClientSocket client;
     ASSERT_TRUE(client.Init());
     EXPECT_FALSE(client.Connect("127.0.0.1", port));
@@ -171,10 +158,6 @@ TEST(ClientSocketUnit, DoubleConnectFails)
     server.Close(true);
 }
 
-// ---------------------------------------------------------------------------
-// Integration fixture — running server shared across tests
-// ---------------------------------------------------------------------------
-
 class ServerClientTest : public ::testing::Test
 {
 protected:
@@ -192,7 +175,6 @@ protected:
         m_server->Close(true);
     }
 
-    // Creates an initialised, connected, running client.
     std::unique_ptr<ClientSocket> MakeClient()
     {
         auto client = std::unique_ptr<ClientSocket>(new ClientSocket());
@@ -205,10 +187,6 @@ protected:
     int                           m_port{0};
     std::unique_ptr<ServerSocket> m_server;
 };
-
-// ---------------------------------------------------------------------------
-// Connect / disconnect callbacks
-// ---------------------------------------------------------------------------
 
 TEST_F(ServerClientTest, ClientConnect_OnConnectFires)
 {
@@ -254,10 +232,6 @@ TEST_F(ServerClientTest, ClientDisconnect_OnDisconnectFires)
     EXPECT_TRUE(WaitFor(mtx, cv, [&]{ return disconnect_count.load() == 1; }));
     EXPECT_EQ(disconnect_count.load(), 1);
 }
-
-// ---------------------------------------------------------------------------
-// Data flow: client → server
-// ---------------------------------------------------------------------------
 
 TEST_F(ServerClientTest, ClientSendsData_ServerReceives)
 {
@@ -320,10 +294,6 @@ TEST_F(ServerClientTest, MultipleMessages_SameClient)
     client->Close(true);
 }
 
-// ---------------------------------------------------------------------------
-// Data flow: server → client
-// ---------------------------------------------------------------------------
-
 TEST_F(ServerClientTest, ServerWritesBack_ClientReceives)
 {
     const std::string server_msg = "hello client";
@@ -350,7 +320,6 @@ TEST_F(ServerClientTest, ServerWritesBack_ClientReceives)
         cv.notify_all();
     });
 
-    // Wait for OnConnected to fire so we have the idx
     ASSERT_TRUE(WaitFor(mtx, cv, [&]{ return client_idx.load() != -1; }));
 
     ASSERT_TRUE(m_server->Write(
@@ -363,10 +332,6 @@ TEST_F(ServerClientTest, ServerWritesBack_ClientReceives)
 
     client->Close(true);
 }
-
-// ---------------------------------------------------------------------------
-// Echo round-trip
-// ---------------------------------------------------------------------------
 
 TEST_F(ServerClientTest, EchoRoundTrip)
 {
@@ -403,10 +368,6 @@ TEST_F(ServerClientTest, EchoRoundTrip)
     client->Close(true);
 }
 
-// ---------------------------------------------------------------------------
-// Large data — spans multiple BUFFER_SIZE reads
-// ---------------------------------------------------------------------------
-
 TEST_F(ServerClientTest, LargeData_SpansMultipleReads)
 {
     const size_t total_size = 8192; // 8× BUFFER_SIZE
@@ -441,10 +402,6 @@ TEST_F(ServerClientTest, LargeData_SpansMultipleReads)
 
     client->Close(true);
 }
-
-// ---------------------------------------------------------------------------
-// Multiple clients
-// ---------------------------------------------------------------------------
 
 TEST_F(ServerClientTest, MultipleClients_AllConnect)
 {
@@ -528,10 +485,6 @@ TEST_F(ServerClientTest, MultipleClients_ConcurrentSend)
     for (auto& c : clients) { c->Close(true); }
 }
 
-// ---------------------------------------------------------------------------
-// Close semantics
-// ---------------------------------------------------------------------------
-
 TEST_F(ServerClientTest, ServerClose_ClientFiresOnClose)
 {
     std::mutex              mtx;
@@ -570,7 +523,6 @@ TEST_F(ServerClientTest, ExplicitClientClose_DoesNotFireOnClose)
 
     Yield();
 
-    // User-initiated close must NOT trigger the callback
     client->Close(true);
 
     Yield();

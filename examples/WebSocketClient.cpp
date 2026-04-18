@@ -134,7 +134,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    task.SetFunction([&wsClient, &counter](bool& running) -> void* {
+    task.SetFunction([&wsClient, &counter](std::atomic<bool>& running) -> void* {
         while (running)
         {
             auto str = StringUtil::GenerateRandomString();

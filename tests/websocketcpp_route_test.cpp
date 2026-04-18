@@ -1,27 +1,29 @@
 #include <gtest/gtest.h>
+
 #include <random>
-#include "Route.h"
+
 #include "Request.h"
+#include "Route.h"
 
 using namespace WebSocketCpp;
 
-// ─────────────────────────────────────────────────────────────
-// Random generators
-// ─────────────────────────────────────────────────────────────
 class RandomGen
 {
     std::mt19937 rng;
 
 public:
-    RandomGen() : rng(std::random_device{}()) {}
+    RandomGen()
+        : rng(std::random_device{}())
+    {
+    }
 
     std::string AlphaNumeric(size_t min_len = 5, size_t max_len = 15)
     {
-        const char chars[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        const char                            chars[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
         std::uniform_int_distribution<size_t> len_dist(min_len, max_len);
         std::uniform_int_distribution<size_t> char_dist(0, sizeof(chars) - 2);
 
-        size_t len = len_dist(rng);
+        size_t      len = len_dist(rng);
         std::string result;
         result.reserve(len);
         for (size_t i = 0; i < len; ++i)
@@ -32,9 +34,9 @@ public:
     std::string Numeric(size_t min_len = 1, size_t max_len = 5)
     {
         std::uniform_int_distribution<size_t> len_dist(min_len, max_len);
-        std::uniform_int_distribution<int> digit_dist(0, 9);
+        std::uniform_int_distribution<int>    digit_dist(0, 9);
 
-        size_t len = len_dist(rng);
+        size_t      len = len_dist(rng);
         std::string result;
         result.reserve(len);
         for (size_t i = 0; i < len; ++i)
@@ -44,11 +46,11 @@ public:
 
     std::string Alpha(size_t min_len = 3, size_t max_len = 10)
     {
-        const char chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        const char                            chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
         std::uniform_int_distribution<size_t> len_dist(min_len, max_len);
         std::uniform_int_distribution<size_t> char_dist(0, sizeof(chars) - 2);
 
-        size_t len = len_dist(rng);
+        size_t      len = len_dist(rng);
         std::string result;
         result.reserve(len);
         for (size_t i = 0; i < len; ++i)
@@ -59,9 +61,9 @@ public:
     std::string Lower(size_t min_len = 3, size_t max_len = 10)
     {
         std::uniform_int_distribution<size_t> len_dist(min_len, max_len);
-        std::uniform_int_distribution<char> char_dist('a', 'z');
+        std::uniform_int_distribution<char>   char_dist('a', 'z');
 
-        size_t len = len_dist(rng);
+        size_t      len = len_dist(rng);
         std::string result;
         result.reserve(len);
         for (size_t i = 0; i < len; ++i)
@@ -72,9 +74,9 @@ public:
     std::string Upper(size_t min_len = 3, size_t max_len = 10)
     {
         std::uniform_int_distribution<size_t> len_dist(min_len, max_len);
-        std::uniform_int_distribution<char> char_dist('A', 'Z');
+        std::uniform_int_distribution<char>   char_dist('A', 'Z');
 
-        size_t len = len_dist(rng);
+        size_t      len = len_dist(rng);
         std::string result;
         result.reserve(len);
         for (size_t i = 0; i < len; ++i)
@@ -83,23 +85,16 @@ public:
     }
 };
 
-// ─────────────────────────────────────────────────────────────
-// Test Fixture
-// ─────────────────────────────────────────────────────────────
 class RouteTest : public ::testing::Test
 {
 protected:
     RandomGen rand;
 };
 
-
-// ─────────────────────────────────────────────────────────────
-// Basic Route Construction
-// ─────────────────────────────────────────────────────────────
 TEST_F(RouteTest, Constructor_StoresPathAndMethod)
 {
     std::string path = "/users";
-    Route route(path, Method::GET, false);
+    Route       route(path, Method::GET, false);
 
     EXPECT_EQ(route.GetPath(), path);
     EXPECT_FALSE(route.IsUseAuth());
@@ -111,14 +106,10 @@ TEST_F(RouteTest, Constructor_WithAuth)
     EXPECT_TRUE(route.IsUseAuth());
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Literal Path Matching
-// ─────────────────────────────────────────────────────────────
 TEST_F(RouteTest, IsMatch_ExactLiteralPath)
 {
     std::string path = "/users/profile";
-    Route route(path, Method::GET);
+    Route       route(path, Method::GET);
 
     Request req;
     req.SetMethod(Method::GET);
@@ -129,7 +120,7 @@ TEST_F(RouteTest, IsMatch_ExactLiteralPath)
 
 TEST_F(RouteTest, IsMatch_LiteralPath_WrongMethod)
 {
-    Route route("/users", Method::GET);
+    Route   route("/users", Method::GET);
     Request req;
     req.SetMethod(Method::POST);
     req.GetUrl().Parse("/users", false);
@@ -139,7 +130,7 @@ TEST_F(RouteTest, IsMatch_LiteralPath_WrongMethod)
 
 TEST_F(RouteTest, IsMatch_LiteralPath_WrongPath)
 {
-    Route route("/users", Method::GET);
+    Route   route("/users", Method::GET);
     Request req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/posts", false);
@@ -149,7 +140,7 @@ TEST_F(RouteTest, IsMatch_LiteralPath_WrongPath)
 
 TEST_F(RouteTest, IsMatch_LiteralPath_ExtraSegments)
 {
-    Route route("/users", Method::GET);
+    Route   route("/users", Method::GET);
     Request req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/users/extra", false);
@@ -157,15 +148,11 @@ TEST_F(RouteTest, IsMatch_LiteralPath_ExtraSegments)
     EXPECT_FALSE(route.IsMatch(req));
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Variable Matching - Simple {name}
-// ─────────────────────────────────────────────────────────────
 TEST_F(RouteTest, IsMatch_SimpleVariable)
 {
     std::string userId = rand.AlphaNumeric(5, 10);
-    Route route("/users/{id}", Method::GET);
-    Request req;
+    Route       route("/users/{id}", Method::GET);
+    Request     req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/users/" + userId, false);
 
@@ -177,8 +164,8 @@ TEST_F(RouteTest, IsMatch_MultipleVariables)
 {
     std::string userId = rand.AlphaNumeric(5, 10);
     std::string postId = rand.AlphaNumeric(5, 10);
-    Route route("/users/{userId}/posts/{postId}", Method::GET);
-    Request req;
+    Route       route("/users/{userId}/posts/{postId}", Method::GET);
+    Request     req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/users/" + userId + "/posts/" + postId, false);
 
@@ -190,8 +177,8 @@ TEST_F(RouteTest, IsMatch_MultipleVariables)
 TEST_F(RouteTest, IsMatch_VariableAtEnd)
 {
     std::string filename = rand.AlphaNumeric(8, 15);
-    Route route("/files/{filename}", Method::GET);
-    Request req;
+    Route       route("/files/{filename}", Method::GET);
+    Request     req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/files/" + filename, false);
 
@@ -199,15 +186,11 @@ TEST_F(RouteTest, IsMatch_VariableAtEnd)
     EXPECT_EQ(req.GetArg("filename"), filename);
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Typed Variables
-// ─────────────────────────────────────────────────────────────
 TEST_F(RouteTest, IsMatch_NumericVariable)
 {
     std::string id = rand.Numeric(3, 8);
-    Route route("/users/{id:numeric}", Method::GET);
-    Request req;
+    Route       route("/users/{id:numeric}", Method::GET);
+    Request     req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/users/" + id, false);
 
@@ -217,7 +200,7 @@ TEST_F(RouteTest, IsMatch_NumericVariable)
 
 TEST_F(RouteTest, IsMatch_NumericVariable_RejectsAlpha)
 {
-    Route route("/users/{id:numeric}", Method::GET);
+    Route   route("/users/{id:numeric}", Method::GET);
     Request req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/users/abc", false);
@@ -228,8 +211,8 @@ TEST_F(RouteTest, IsMatch_NumericVariable_RejectsAlpha)
 TEST_F(RouteTest, IsMatch_AlphaVariable)
 {
     std::string name = rand.Alpha(5, 10);
-    Route route("/users/{name:alpha}", Method::GET);
-    Request req;
+    Route       route("/users/{name:alpha}", Method::GET);
+    Request     req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/users/" + name, false);
 
@@ -239,7 +222,7 @@ TEST_F(RouteTest, IsMatch_AlphaVariable)
 
 TEST_F(RouteTest, IsMatch_AlphaVariable_RejectsNumeric)
 {
-    Route route("/users/{name:alpha}", Method::GET);
+    Route   route("/users/{name:alpha}", Method::GET);
     Request req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/users/12345", false);
@@ -250,8 +233,8 @@ TEST_F(RouteTest, IsMatch_AlphaVariable_RejectsNumeric)
 TEST_F(RouteTest, IsMatch_UpperVariable)
 {
     std::string code = rand.Upper(3, 6);
-    Route route("/codes/{code:upper}", Method::GET);
-    Request req;
+    Route       route("/codes/{code:upper}", Method::GET);
+    Request     req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/codes/" + code, false);
 
@@ -262,8 +245,8 @@ TEST_F(RouteTest, IsMatch_UpperVariable)
 TEST_F(RouteTest, IsMatch_LowerVariable)
 {
     std::string tag = rand.Lower(4, 8);
-    Route route("/tags/{tag:lower}", Method::GET);
-    Request req;
+    Route       route("/tags/{tag:lower}", Method::GET);
+    Request     req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/tags/" + tag, false);
 
@@ -301,10 +284,6 @@ TEST_F(RouteTest, IsMatch_AnyVariable)
     EXPECT_TRUE(route.IsMatch(req));
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Wildcard Matching
-// ─────────────────────────────────────────────────────────────
 TEST_F(RouteTest, IsMatch_WildcardAtEnd)
 {
     Route route("/files/*", Method::GET);
@@ -328,7 +307,7 @@ TEST_F(RouteTest, IsMatch_WildcardInMiddle)
 TEST_F(RouteTest, IsMatch_WildcardWithVariable)
 {
     std::string filename = rand.AlphaNumeric(8, 15);
-    Route route("/files/*/download/{filename}", Method::GET);
+    Route       route("/files/*/download/{filename}", Method::GET);
 
     Request req;
     req.SetMethod(Method::GET);
@@ -347,10 +326,6 @@ TEST_F(RouteTest, IsMatch_Wildcard_NotFoundAfter)
     EXPECT_FALSE(route.IsMatch(req));
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Optional Segments
-// ─────────────────────────────────────────────────────────────
 TEST_F(RouteTest, IsMatch_OptionalSegment_Present)
 {
     Route route("/users[/active]", Method::GET);
@@ -381,17 +356,13 @@ TEST_F(RouteTest, IsMatch_OptionalVariable)
     EXPECT_TRUE(route.IsMatch(req1));
 
     std::string id = rand.AlphaNumeric(5, 10);
-    Request req2;
+    Request     req2;
     req2.SetMethod(Method::GET);
     req2.GetUrl().Parse("/users/" + id, false);
     EXPECT_TRUE(route.IsMatch(req2));
     EXPECT_EQ(req2.GetArg("id"), id);
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Or-Groups
-// ─────────────────────────────────────────────────────────────
 TEST_F(RouteTest, IsMatch_OrGroup_FirstOption)
 {
     Route route("/api/(v1|v2)/users", Method::GET);
@@ -432,15 +403,11 @@ TEST_F(RouteTest, IsMatch_OrGroup_LongestMatch)
     EXPECT_TRUE(route.IsMatch(req));
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Complex Patterns
-// ─────────────────────────────────────────────────────────────
 TEST_F(RouteTest, IsMatch_ComplexPattern_AllFeatures)
 {
     std::string version = "v1";
-    std::string userId = rand.Numeric(5, 8);
-    std::string action = rand.Alpha(4, 10);
+    std::string userId  = rand.Numeric(5, 8);
+    std::string action  = rand.Alpha(4, 10);
 
     Route route("/api/(v1|v2)/users/{id:numeric}[/actions]/{action:alpha}", Method::POST);
 
@@ -456,9 +423,9 @@ TEST_F(RouteTest, IsMatch_ComplexPattern_AllFeatures)
 TEST_F(RouteTest, IsMatch_NestedPath)
 {
     std::string projectId = rand.AlphaNumeric(5, 10);
-    std::string fileId = rand.AlphaNumeric(5, 10);
+    std::string fileId    = rand.AlphaNumeric(5, 10);
 
-    Route route("/projects/{projectId}/files/{fileId}", Method::GET);
+    Route   route("/projects/{projectId}/files/{fileId}", Method::GET);
     Request req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/projects/" + projectId + "/files/" + fileId, false);
@@ -468,15 +435,9 @@ TEST_F(RouteTest, IsMatch_NestedPath)
     EXPECT_EQ(req.GetArg("fileId"), fileId);
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Malformed Pattern Detection
-// ─────────────────────────────────────────────────────────────
 TEST_F(RouteTest, Parse_UnclosedBrace_ReturnsFalse)
 {
-    // Route constructor calls Parse internally, but we can't directly test Parse return value
-    // We can test that malformed routes don't match anything
-    Route route("/users/{id", Method::GET);
+    Route   route("/users/{id", Method::GET);
     Request req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/users/123", false);
@@ -487,7 +448,7 @@ TEST_F(RouteTest, Parse_UnclosedBrace_ReturnsFalse)
 
 TEST_F(RouteTest, Parse_UnclosedBracket_ReturnsFalse)
 {
-    Route route("/users[/active", Method::GET);
+    Route   route("/users[/active", Method::GET);
     Request req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/users/active", false);
@@ -497,7 +458,7 @@ TEST_F(RouteTest, Parse_UnclosedBracket_ReturnsFalse)
 
 TEST_F(RouteTest, Parse_UnmatchedClosingBracket_ReturnsFalse)
 {
-    Route route("/users]/active", Method::GET);
+    Route   route("/users]/active", Method::GET);
     Request req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/users]/active", false);
@@ -507,7 +468,7 @@ TEST_F(RouteTest, Parse_UnmatchedClosingBracket_ReturnsFalse)
 
 TEST_F(RouteTest, Parse_NestedBraces_ReturnsFalse)
 {
-    Route route("/users/{{id}}", Method::GET);
+    Route   route("/users/{{id}}", Method::GET);
     Request req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/users/123", false);
@@ -517,7 +478,7 @@ TEST_F(RouteTest, Parse_NestedBraces_ReturnsFalse)
 
 TEST_F(RouteTest, Parse_EmptyVariableName_ReturnsFalse)
 {
-    Route route("/users/{}", Method::GET);
+    Route   route("/users/{}", Method::GET);
     Request req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/users/123", false);
@@ -525,13 +486,9 @@ TEST_F(RouteTest, Parse_EmptyVariableName_ReturnsFalse)
     EXPECT_FALSE(route.IsMatch(req));
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// ToString
-// ─────────────────────────────────────────────────────────────
 TEST_F(RouteTest, ToString_ContainsBasicInfo)
 {
-    Route route("/users/{id}", Method::GET, true);
+    Route       route("/users/{id}", Method::GET, true);
     std::string str = route.ToString();
 
     EXPECT_NE(str.find("GET"), std::string::npos);
@@ -541,20 +498,15 @@ TEST_F(RouteTest, ToString_ContainsBasicInfo)
 
 TEST_F(RouteTest, ToString_ContainsTokens)
 {
-    Route route("/users/{id}", Method::GET);
+    Route       route("/users/{id}", Method::GET);
     std::string str = route.ToString();
 
-    // Should include token breakdown
     EXPECT_NE(str.find("tokens:"), std::string::npos);
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Edge Cases
-// ─────────────────────────────────────────────────────────────
 TEST_F(RouteTest, IsMatch_EmptyPath)
 {
-    Route route("/", Method::GET);
+    Route   route("/", Method::GET);
     Request req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/", false);
@@ -564,7 +516,7 @@ TEST_F(RouteTest, IsMatch_EmptyPath)
 
 TEST_F(RouteTest, IsMatch_RootPath)
 {
-    Route route("", Method::GET);
+    Route   route("", Method::GET);
     Request req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("", false);
@@ -574,7 +526,7 @@ TEST_F(RouteTest, IsMatch_RootPath)
 
 TEST_F(RouteTest, IsMatch_TrailingSlash_NotMatched)
 {
-    Route route("/users", Method::GET);
+    Route   route("/users", Method::GET);
     Request req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/users/", false);
@@ -614,13 +566,9 @@ TEST_F(RouteTest, IsMatch_MultipleOrGroups)
     EXPECT_FALSE(route.IsMatch(req3));
 }
 
-
-// ─────────────────────────────────────────────────────────────
-// Real-World WebSocket Routes
-// ─────────────────────────────────────────────────────────────
 TEST_F(RouteTest, WebSocket_SimpleConnection)
 {
-    Route route("/ws", Method::GET);
+    Route   route("/ws", Method::GET);
     Request req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/ws", false);
@@ -631,8 +579,8 @@ TEST_F(RouteTest, WebSocket_SimpleConnection)
 TEST_F(RouteTest, WebSocket_RoomConnection)
 {
     std::string roomId = rand.AlphaNumeric(8, 15);
-    Route route("/ws/room/{roomId}", Method::GET);
-    Request req;
+    Route       route("/ws/room/{roomId}", Method::GET);
+    Request     req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/ws/room/" + roomId, false);
 
@@ -645,7 +593,7 @@ TEST_F(RouteTest, WebSocket_UserAndRoom)
     std::string userId = rand.Numeric(5, 10);
     std::string roomId = rand.AlphaNumeric(8, 15);
 
-    Route route("/ws/user/{userId}/room/{roomId}", Method::GET);
+    Route   route("/ws/user/{userId}/room/{roomId}", Method::GET);
     Request req;
     req.SetMethod(Method::GET);
     req.GetUrl().Parse("/ws/user/" + userId + "/room/" + roomId, false);
@@ -665,7 +613,7 @@ TEST_F(RouteTest, WebSocket_OptionalToken)
     EXPECT_TRUE(route.IsMatch(req1));
 
     std::string token = rand.AlphaNumeric(16, 32);
-    Request req2;
+    Request     req2;
     req2.SetMethod(Method::GET);
     req2.GetUrl().Parse("/ws/chat/" + token, false);
     EXPECT_TRUE(route.IsMatch(req2));

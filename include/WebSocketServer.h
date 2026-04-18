@@ -21,6 +21,7 @@
 #ifndef WEB_SOCKET_CPP_WEBSOCKETSERVER_H
 #define WEB_SOCKET_CPP_WEBSOCKETSERVER_H
 
+#include <atomic>
 #include <condition_variable>
 #include <list>
 #include <memory>
@@ -99,7 +100,7 @@ protected:
 
     bool  StartRequestThread();
     bool  StopRequestThread();
-    void* RequestThread(bool& running);
+    void* RequestThread(std::atomic<bool>& running);
 
     void SendSignal();
     void WaitForSignal();

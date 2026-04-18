@@ -179,11 +179,11 @@ std::vector<FileSystem::FileInfo> FileSystem::GetFolder(const std::string& path)
             std::string mod;
             if (stat(std::string(NormalizePath(path) + diread->d_name).c_str(), &info) == 0)
             {
-                auto          mod_time = info.st_mtime;
-                const time_t* t        = &mod_time;
-                struct tm*    timeinfo = gmtime(t);
-                char          buffer[30];
-                strftime(buffer, 30, "%a, %d %b %Y %H:%M:%S GMT", timeinfo);
+                auto      mod_time = info.st_mtime;
+                struct tm tmbuf{};
+                gmtime_r(&mod_time, &tmbuf);
+                char buffer[30];
+                strftime(buffer, 30, "%a, %d %b %Y %H:%M:%S GMT", &tmbuf);
                 mod  = buffer;
                 size = info.st_size;
             }
@@ -304,14 +304,13 @@ bool FileSystem::DeleteFolder(const std::string& path)
 
 std::string FileSystem::GetDateTime()
 {
-    time_t     tm;
-    struct tm* timeinfo;
-    char       buffer[30];
+    time_t    tm;
+    struct tm tmbuf{};
+    char      buffer[30];
 
     time(&tm);
-    const time_t* t = &tm;
-    timeinfo        = gmtime(t);
-    strftime(buffer, 30, "%a, %d %b %Y %H:%M:%S GMT", timeinfo);
+    gmtime_r(&tm, &tmbuf);
+    strftime(buffer, 30, "%a, %d %b %Y %H:%M:%S GMT", &tmbuf);
     return buffer;
 }
 
@@ -320,11 +319,11 @@ std::string FileSystem::GetFileModifiedTime(const std::string& file)
     struct stat result;
     if (stat(file.c_str(), &result) == 0)
     {
-        auto          mod_time = result.st_mtime;
-        const time_t* t        = &mod_time;
-        struct tm*    timeinfo = gmtime(t);
-        char          buffer[30];
-        strftime(buffer, 30, "%a, %d %b %Y %H:%M:%S GMT", timeinfo);
+        auto      mod_time = result.st_mtime;
+        struct tm tmbuf{};
+        gmtime_r(&mod_time, &tmbuf);
+        char buffer[30];
+        strftime(buffer, 30, "%a, %d %b %Y %H:%M:%S GMT", &tmbuf);
         return buffer;
     }
 
