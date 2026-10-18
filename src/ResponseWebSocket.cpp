@@ -114,9 +114,7 @@ bool ResponseWebSocket::Send(CommunicationServerBase* communication) const
 
         response.insert(response.end(), m_data.begin(), m_data.end());
 
-        communication->Write(m_connID, response);
-
-        return true;
+        return communication->Write(m_connID, response);
     }
     catch (...)
     {
