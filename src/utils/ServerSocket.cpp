@@ -464,6 +464,33 @@ bool ServerSocket::HandleRead(int32_t idx)
     return true;
 }
 
+bool ServerSocket::CloseConnection(int32_t idx)
+{
+    if (idx < 0 || static_cast<size_t>(idx) >= m_connections.size())
+    {
+        SetLastError("invalid connection index");
+        return false;
+    }
+
+    int32_t fd = m_connections[idx].GetFD();
+    if (fd < 0)
+    {
+        SetLastError("connection not active");
+        return false;
+    }
+
+    // the fd belongs to the processing thread: shutting it down makes epoll report the hang-up,
+    // and that thread closes the fd and reports the disconnection as for any other client
+    std::lock_guard<std::mutex> lock(m_write_mutex);
+    if (shutdown(fd, SHUT_RDWR) != 0)
+    {
+        SetLastError(std::string("socket shutdown error: ") + strerror(errno));
+        return false;
+    }
+
+    return true;
+}
+
 bool ServerSocket::CloseSocket(int32_t fd)
 {
     if (fd >= 0)

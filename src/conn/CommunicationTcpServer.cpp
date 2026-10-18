@@ -136,9 +136,13 @@ bool CommunicationTcpServer::Write(int connID, ByteArray& data, size_t size)
     return true;
 }
 
-bool CommunicationTcpServer::CloseConnection(int /*connID*/)
+bool CommunicationTcpServer::CloseConnection(int connID)
 {
-    // ServerSocket manages connection lifecycle internally
+    if (!m_server.CloseConnection(connID))
+    {
+        SetLastError(m_server.GetLastError());
+        return false;
+    }
     return true;
 }
 

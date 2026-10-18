@@ -44,6 +44,8 @@ public:
     void OnDataReady(OnDataReadyCallback callback);
 
     bool Write(int32_t idx, const uint8_t* data, size_t size);
+    // closes one client; the disconnect callback follows from the processing thread
+    bool CloseConnection(int32_t idx);
 
 #ifdef WITH_OPENSSL
     void SetSslCredentials(const std::string& cert, const std::string& key);

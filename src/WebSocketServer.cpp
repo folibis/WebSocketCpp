@@ -521,8 +521,19 @@ bool WebSocketServer::ProcessWsRequest(Request& request, const RequestWebSocket&
             response.SetMessageType(MessageType::Pong);
             break;
         case MessageType::Close:
-
-            break;
+        {
+            // RFC 6455 5.5.1: answer with a Close frame carrying the client's status code, then
+            // close the connection; otherwise the client waits for its own timeout to give up
+            const ByteArray& data = wsRequest.GetData();
+            if (data.size() >= 2)
+            {
+                response.WriteBinary(ByteArray(data.begin(), data.begin() + 2));
+            }
+            response.SetMessageType(MessageType::Close);
+            response.Send(m_server.get());
+            m_server->CloseConnection(request.GetConnectionID());
+            return true;
+        }
         default:
             break;
     }

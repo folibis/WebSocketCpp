@@ -139,8 +139,13 @@ bool CommunicationSslServer::Write(int connID, ByteArray& data, size_t size)
     return true;
 }
 
-bool CommunicationSslServer::CloseConnection(int /*connID*/)
+bool CommunicationSslServer::CloseConnection(int connID)
 {
+    if (!m_server.CloseConnection(connID))
+    {
+        SetLastError(m_server.GetLastError());
+        return false;
+    }
     return true;
 }
 
