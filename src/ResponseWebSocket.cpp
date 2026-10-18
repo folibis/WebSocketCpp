@@ -125,23 +125,41 @@ bool ResponseWebSocket::Send(CommunicationServerBase* communication) const
 bool ResponseWebSocket::Parse(const ByteArray& data)
 {
     WebSocketHeader header;
-    const uint8_t*  ptr = data.data();
+    if (data.size() < sizeof(header))
+    {
+        return false;
+    }
+
+    const uint8_t* ptr = data.data();
     std::memcpy(&header, ptr, sizeof(header));
     unsigned long long size       = 0;
     size_t             headerSize = sizeof(header);
+    // the extended payload length is in network byte order (big-endian)
     if (header.flags2.PayloadLen >= 126)
     {
         if (header.flags2.PayloadLen == 126)
         {
-            WebSocketHeaderLength2 lengthHeader;
-            std::memcpy(&lengthHeader, ptr + sizeof(header), sizeof(lengthHeader));
+            WebSocketHeaderLength2 lengthHeader = {};
+            if (data.size() < headerSize + sizeof(lengthHeader))
+            {
+                return false;
+            }
+            lengthHeader.length.bytes[0] = ptr[headerSize + 1];
+            lengthHeader.length.bytes[1] = ptr[headerSize];
             headerSize += sizeof(lengthHeader);
             size = lengthHeader.length.value;
         }
         else
         {
-            WebSocketHeaderLength3 lengthHeader;
-            std::memcpy(&lengthHeader, ptr + sizeof(header), sizeof(lengthHeader));
+            WebSocketHeaderLength3 lengthHeader = {};
+            if (data.size() < headerSize + sizeof(lengthHeader))
+            {
+                return false;
+            }
+            for (size_t i = 0; i < sizeof(lengthHeader); i++)
+            {
+                lengthHeader.length.bytes[i] = ptr[headerSize + sizeof(lengthHeader) - 1 - i];
+            }
             headerSize += sizeof(lengthHeader);
             size = lengthHeader.length.value;
         }
