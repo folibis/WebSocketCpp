@@ -35,11 +35,20 @@ bool WebSocketClient::Run()
 
 bool WebSocketClient::Close(bool wait)
 {
+    // nothing to close before the first Open() created the connection
+    if (m_connection == nullptr)
+    {
+        return true;
+    }
     return m_connection->Close(wait);
 }
 
 bool WebSocketClient::WaitFor()
 {
+    if (m_connection == nullptr)
+    {
+        return true;
+    }
     return m_connection->WaitFor();
 }
 
@@ -141,6 +150,11 @@ bool WebSocketClient::SendText(const ByteArray& data)
     RequestWebSocket request;
     request.SetType(MessageType::Text);
     request.SetData(data);
+    if (m_connection == nullptr)
+    {
+        SetLastError("not connected");
+        return false;
+    }
     return request.Send(m_connection.get());
 }
 
@@ -154,6 +168,11 @@ bool WebSocketClient::SendBinary(const ByteArray& data)
     RequestWebSocket request;
     request.SetType(MessageType::Binary);
     request.SetData(data);
+    if (m_connection == nullptr)
+    {
+        SetLastError("not connected");
+        return false;
+    }
     return request.Send(m_connection.get());
 }
 
@@ -166,6 +185,11 @@ bool WebSocketClient::SendPing()
 {
     RequestWebSocket request;
     request.SetType(MessageType::Ping);
+    if (m_connection == nullptr)
+    {
+        SetLastError("not connected");
+        return false;
+    }
     return request.Send(m_connection.get());
 }
 
