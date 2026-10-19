@@ -67,70 +67,69 @@ bool RequestWebSocket::Parse(const ByteArray& data)
         }
 
         const Config& config = Config::Instance();
-        if (payloadSize > 0)
+        // a frame may carry no payload at all (RFC 6455 5.2): e.g. a Close without a status code or an
+        // empty Ping; it still has to be accepted and consumed, or it blocks every frame after it
+        if (payloadSize > config.GetMaxFrameSize())
         {
-            if (payloadSize > config.GetMaxFrameSize())
+            return false;
+        }
+
+        if (m_data.size() + payloadSize > config.GetMaxMessageSize())
+        {
+            return false;
+        }
+
+        size_t              maskHeaderSize = 0;
+        WebSocketHeaderMask mask;
+        size_t              headers_size = headerSize + sizeHeaderSize;
+
+        if (headers_size > SIZE_MAX - payloadSize)
+        {
+            return false;
+        }
+
+        if (header.flags2.Mask == 1)
+        {
+            maskHeaderSize = sizeof(WebSocketHeaderMask);
+            headers_size += maskHeaderSize;
+            if (dataSize >= headers_size)
+            {
+                std::memcpy(&mask, data.data() + headerSize + sizeHeaderSize, maskHeaderSize);
+            }
+            else
             {
                 return false;
             }
+        }
 
-            if (m_data.size() + payloadSize > config.GetMaxMessageSize())
-            {
-                return false;
-            }
-
-            size_t              maskHeaderSize = 0;
-            WebSocketHeaderMask mask;
-            size_t              headers_size = headerSize + sizeHeaderSize;
-
-            if (headers_size > SIZE_MAX - payloadSize)
-            {
-                return false;
-            }
-
+        size_t messageFullSize = headers_size + payloadSize;
+        if (dataSize >= messageFullSize)
+        {
+            // according to rfc6455#section-5.3 server must ignore unmasked data
+            // but anyway we support such non-standard clients
             if (header.flags2.Mask == 1)
             {
-                maskHeaderSize = sizeof(WebSocketHeaderMask);
-                headers_size += maskHeaderSize;
-                if (dataSize >= headers_size)
+                ByteArray encoded(payloadSize);
+                for (size_t i = 0; i < payloadSize; i++)
                 {
-                    std::memcpy(&mask, data.data() + headerSize + sizeHeaderSize, maskHeaderSize);
+                    encoded[i] = data[headers_size + i] ^ mask.bytes[i % 4];
                 }
-                else
-                {
-                    return false;
-                }
+                m_data.insert(m_data.end(), encoded.begin(), encoded.end());
             }
-
-            size_t messageFullSize = headers_size + payloadSize;
-            if (dataSize >= messageFullSize)
+            else
             {
-                // according to rfc6455#section-5.3 server must ignore unmasked data
-                // but anyway we support such non-standard clients
-                if (header.flags2.Mask == 1)
-                {
-                    ByteArray encoded(payloadSize);
-                    for (size_t i = 0; i < payloadSize; i++)
-                    {
-                        encoded[i] = data[headers_size + i] ^ mask.bytes[i % 4];
-                    }
-                    m_data.insert(m_data.end(), encoded.begin(), encoded.end());
-                }
-                else
-                {
-                    m_data.insert(m_data.end(),
-                        data.begin() + headers_size,
-                        data.begin() + messageFullSize);
-                }
-
-                if (header.flags1.FIN == 1)
-                {
-                    m_final = true;
-                    retval  = true;
-                }
-
-                m_size = messageFullSize;
+                m_data.insert(m_data.end(),
+                    data.begin() + headers_size,
+                    data.begin() + messageFullSize);
             }
+
+            if (header.flags1.FIN == 1)
+            {
+                m_final = true;
+                retval  = true;
+            }
+
+            m_size = messageFullSize;
         }
     }
 
